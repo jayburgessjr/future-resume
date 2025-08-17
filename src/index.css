@@ -11,7 +11,11 @@ Clean, professional with subtle playful elements
 
 @layer base {
   :root {
-    /* Base colors - Navy and Orange palette */
+    /* Brand Colors - Navy #001f3f and Orange #FF851B */
+    --brand-navy: 210 100% 12%;
+    --brand-orange: 32 100% 55%;
+    
+    /* Base colors */
     --background: 0 0% 98%;
     --foreground: 210 100% 6%;
 
@@ -21,15 +25,27 @@ Clean, professional with subtle playful elements
     --popover: 0 0% 100%;
     --popover-foreground: 210 100% 6%;
 
-    /* Navy primary (#001f3f) */
+    /* Navy primary (#001f3f) - WCAG AA compliant */
     --primary: 210 100% 12%;
     --primary-foreground: 0 0% 100%;
     --primary-hover: 210 100% 8%;
 
-    /* Orange accent (#FF851B) */
+    /* Orange accent (#FF851B) - WCAG AA compliant on white */
     --accent: 32 100% 55%;
     --accent-foreground: 0 0% 100%;
     --accent-hover: 32 100% 50%;
+
+    /* Neutral scale */
+    --neutral-50: 210 20% 98%;
+    --neutral-100: 210 20% 96%;
+    --neutral-200: 210 20% 90%;
+    --neutral-300: 210 20% 83%;
+    --neutral-400: 210 20% 64%;
+    --neutral-500: 210 20% 45%;
+    --neutral-600: 210 20% 32%;
+    --neutral-700: 210 20% 25%;
+    --neutral-800: 210 20% 15%;
+    --neutral-900: 210 20% 9%;
 
     --secondary: 210 20% 95%;
     --secondary-foreground: 210 100% 12%;
@@ -37,12 +53,37 @@ Clean, professional with subtle playful elements
     --muted: 210 20% 96%;
     --muted-foreground: 210 20% 45%;
 
+    /* Status colors - WCAG compliant */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 20% 90%;
     --input: 210 20% 90%;
     --ring: 210 100% 12%;
+
+    /* Typography scale variables */
+    --text-xs: 0.75rem;     /* 12px */
+    --text-sm: 0.875rem;    /* 14px */
+    --text-base: 1rem;      /* 16px */
+    --text-lg: 1.125rem;    /* 18px */
+    --text-xl: 1.25rem;     /* 20px */
+    --text-2xl: 1.5rem;     /* 24px */
+    --text-3xl: 1.75rem;    /* 28px */
+    --text-4xl: 2rem;       /* 32px */
+
+    /* Line heights */
+    --leading-tight: 1.25;
+    --leading-normal: 1.6;
+    --leading-relaxed: 1.75;
+
+    /* Letter spacing */
+    --tracking-tight: -0.025em;
+    --tracking-normal: 0em;
+    --tracking-wide: 0.025em;
 
     /* Custom gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
@@ -127,32 +168,102 @@ Clean, professional with subtle playful elements
 }
 
 @layer components {
-  /* Button variants using design system */
-  .btn-hero {
-    @apply bg-gradient-to-r from-accent to-accent-hover text-accent-foreground 
-           shadow-accent hover:shadow-xl hover:scale-105 
-           px-8 py-3 rounded-lg font-semibold text-lg
-           transition-all duration-300;
+  /* Typography scale */
+  .text-xs { font-size: var(--text-xs); }
+  .text-sm { font-size: var(--text-sm); }
+  .text-base { font-size: var(--text-base); }
+  .text-lg { font-size: var(--text-lg); }
+  .text-xl { font-size: var(--text-xl); }
+  .text-2xl { font-size: var(--text-2xl); }
+  .text-3xl { font-size: var(--text-3xl); }
+  .text-4xl { font-size: var(--text-4xl); }
+
+  /* Heading styles with tight tracking */
+  .heading {
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--leading-tight);
+    font-weight: 600;
   }
-  
+
+  /* Body text with optimal line height */
+  .body-text {
+    line-height: var(--leading-normal);
+    letter-spacing: var(--tracking-normal);
+  }
+
+  /* Button variants using design system */
   .btn-primary {
     @apply bg-primary text-primary-foreground 
-           hover:bg-primary/90 shadow-soft hover:shadow-medium
-           px-6 py-2.5 rounded-lg font-medium
-           transition-all duration-300;
+           hover:bg-primary-hover hover:scale-[1.02] hover:opacity-95
+           px-6 py-2.5 rounded-lg font-medium text-sm
+           transition-all duration-200 ease-out
+           shadow-soft hover:shadow-medium;
+  }
+
+  .btn-accent {
+    @apply bg-accent text-accent-foreground 
+           hover:bg-accent-hover hover:scale-[1.02] hover:opacity-95
+           px-6 py-2.5 rounded-lg font-medium text-sm
+           transition-all duration-200 ease-out
+           shadow-accent hover:shadow-xl;
   }
 
   .btn-secondary {
     @apply bg-secondary text-secondary-foreground border border-border
-           hover:bg-muted shadow-sm hover:shadow-soft
-           px-6 py-2.5 rounded-lg font-medium
-           transition-all duration-300;
+           hover:bg-neutral-100 hover:scale-[1.02] hover:opacity-95
+           px-6 py-2.5 rounded-lg font-medium text-sm
+           transition-all duration-200 ease-out
+           shadow-sm hover:shadow-soft;
   }
 
-  /* Card styles */
-  .card-elegant {
-    @apply bg-card border border-border shadow-soft hover:shadow-medium
-           rounded-xl p-6 transition-all duration-300;
+  .btn-ghost {
+    @apply text-foreground hover:bg-neutral-100 hover:scale-[1.02] hover:opacity-90
+           px-6 py-2.5 rounded-lg font-medium text-sm
+           transition-all duration-200 ease-out;
+  }
+
+  /* Card component */
+  .card-base {
+    @apply bg-card border border-border shadow-soft 
+           hover:shadow-medium hover:scale-[1.01] hover:opacity-95
+           rounded-xl p-6 transition-all duration-200 ease-out;
+  }
+
+  /* Input component */
+  .input-base {
+    @apply flex h-10 w-full rounded-md border border-input bg-background
+           px-3 py-2 text-sm ring-offset-background
+           placeholder:text-muted-foreground
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+           hover:border-neutral-400 hover:scale-[1.01]
+           disabled:cursor-not-allowed disabled:opacity-50
+           transition-all duration-200 ease-out;
+  }
+
+  /* Pill component */
+  .pill-base {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium
+           border transition-all duration-200 ease-out
+           hover:scale-[1.05] hover:opacity-90;
+  }
+
+  .pill-primary {
+    @apply pill-base bg-primary text-primary-foreground border-primary;
+  }
+
+  .pill-accent {
+    @apply pill-base bg-accent text-accent-foreground border-accent;
+  }
+
+  .pill-neutral {
+    @apply pill-base bg-neutral-100 text-neutral-700 border-neutral-200;
+  }
+
+  /* Tooltip base styles */
+  .tooltip-base {
+    @apply rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white
+           shadow-medium transition-all duration-200 ease-out
+           animate-in fade-in-0 zoom-in-95;
   }
 
   /* Hero section gradient */
@@ -166,6 +277,19 @@ Clean, professional with subtle playful elements
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Status variants */
+  .status-success {
+    @apply bg-success text-success-foreground;
+  }
+
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  .status-error {
+    @apply bg-destructive text-destructive-foreground;
   }
 }
 

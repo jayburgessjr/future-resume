@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { generateResumeFlow, ResumeGenerationParams, ResumeGenerationResult } from '@/lib/resumeService';
+import { usePersistenceStore } from './persistenceStore';
 
 interface AppSettings {
   mode: 'concise' | 'detailed' | 'executive';
@@ -143,6 +144,18 @@ export const useAppDataStore = create<AppDataStore>()(
               lastGenerated: new Date(),
             },
           }));
+
+          // Save to database if user is authenticated
+          try {
+            await usePersistenceStore.getState().saveDraft(
+              state.inputs,
+              outputs,
+              state.settings
+            );
+          } catch (error) {
+            // Continue even if save fails (user might not be logged in)
+            console.log('Could not save to database:', error);
+          }
 
         } catch (error) {
           set((currentState) => ({

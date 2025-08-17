@@ -35,11 +35,17 @@ export const UpgradeModal = ({ open, onOpenChange, feature }: UpgradeModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent 
+        className="max-w-2xl"
+        aria-describedby="upgrade-modal-description"
+      >
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-bold">
             {feature ? `Unlock ${feature}` : "Upgrade to Pro"}
           </DialogTitle>
+          <p id="upgrade-modal-description" className="sr-only">
+            Compare Free and Pro plan features to upgrade your account
+          </p>
         </DialogHeader>
         
         <div className="grid md:grid-cols-2 gap-6 py-6">
@@ -106,6 +112,7 @@ export const UpgradeModal = ({ open, onOpenChange, feature }: UpgradeModalProps)
               variant="accent"
               className="w-full"
               size="lg"
+              aria-label="Upgrade to Pro plan for $20 per month"
             >
               {loading ? "Processing..." : "Upgrade to Pro"}
             </Button>

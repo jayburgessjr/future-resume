@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { generateResumeFlow, ResumeGenerationParams, ResumeGenerationResult } from '@/lib/resumeService';
 import { usePersistenceStore } from './persistenceStore';
+import { performGreatnessCheck, logQualityAssessment } from '@/lib/qualityCheck';
 
 interface AppSettings {
   mode: 'concise' | 'detailed' | 'executive';
@@ -139,6 +140,15 @@ export const useAppDataStore = create<AppDataStore>()(
             weeklyKPITracker: result.weeklyKPITracker,
             metadata: result.metadata,
           };
+
+          // Perform Greatness Check and log results (dev-only)
+          const qualityResult = performGreatnessCheck(
+            result.finalResume,
+            state.inputs.jobText,
+            state.settings
+          );
+          
+          logQualityAssessment(qualityResult, 'Resume Generation');
 
           set((currentState) => ({
             outputs,

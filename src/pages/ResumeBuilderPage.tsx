@@ -18,6 +18,7 @@ import { ExportBar } from "@/components/export/ExportBar";
 import { CompanySignalPanel } from "@/components/company/CompanySignalPanel";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { FeatureGuard } from "@/components/subscription/FeatureGuard";
+import { QAPanel } from "@/components/qa/QAPanel";
 import { useToast } from "@/hooks/use-toast";
 
 const ResumeBuilderPage = () => {
@@ -276,6 +277,9 @@ const ResumeBuilderPage = () => {
           </div>
         </div>
       </main>
+      
+      {/* QA Panel (Development Only) */}
+      <QAPanel />
     </div>
   );
 };

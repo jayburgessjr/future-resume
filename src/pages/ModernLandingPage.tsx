@@ -43,7 +43,7 @@ const ModernLandingPage = () => {
               <Link to="/auth">Sign In</Link>
             </Button>
             <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
-              <Link to="/builder">Start Free Trial</Link>
+              <Link to="/auth">Start Free Trial</Link>
             </Button>
           </div>
         </div>
@@ -77,7 +77,7 @@ const ModernLandingPage = () => {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg" className="bg-gradient-to-r from-primary to-accent text-white text-lg px-8 py-4 hover:scale-105 transition-transform">
-                  <Link to="/builder">
+                  <Link to="/auth">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -297,7 +297,7 @@ const ModernLandingPage = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
-                  <Link to="/builder">
+                  <Link to="/auth">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

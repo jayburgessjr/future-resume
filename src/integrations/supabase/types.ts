@@ -64,12 +64,14 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          current_period_end: string | null
           email: string
           id: string
           last_active_at: string | null
           onboarding_status: string | null
           plan: string | null
           stripe_customer_id: string | null
+          sub_status: string | null
           subscribed: boolean
           subscription_end: string | null
           subscription_tier: string | null
@@ -78,12 +80,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_period_end?: string | null
           email: string
           id?: string
           last_active_at?: string | null
           onboarding_status?: string | null
           plan?: string | null
           stripe_customer_id?: string | null
+          sub_status?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
@@ -92,12 +96,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_period_end?: string | null
           email?: string
           id?: string
           last_active_at?: string | null
           onboarding_status?: string | null
           plan?: string | null
           stripe_customer_id?: string | null
+          sub_status?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null

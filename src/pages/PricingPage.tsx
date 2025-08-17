@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { nextAfterPricing } from "@/lib/flowRouter";
 import { supabase } from "@/integrations/supabase/client";
+import { isPro, getPlanInfo } from "@/lib/entitlements";
 import { 
   ArrowLeft, 
   Check, 
@@ -20,9 +21,34 @@ import {
 
 const PricingPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState("");
+  const [profile, setProfile] = useState<any>(null);
+
+  // Load user profile
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   // Redirect if not signed in
   useEffect(() => {
@@ -32,45 +58,47 @@ const PricingPage = () => {
   }, [user, navigate]);
 
   const handlePlanSelect = async (plan: 'free' | 'pro') => {
-    if (!user) return;
+    if (!user || !session) return;
     
     setLoading(plan);
 
     try {
-      // Update user's plan in profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          plan,
-          onboarding_status: 'complete' 
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
       if (plan === 'free') {
+        // Update to free plan directly
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            plan: 'free',
+            onboarding_status: 'complete' 
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
         toast({
           title: "Welcome to the free plan!",
           description: "You can start building your first resume right away.",
         });
         navigate(nextAfterPricing({ plan }));
       } else {
-        // For Pro plan - this would integrate with Stripe in the future
-        toast({
-          title: "Pro plan coming soon!",
-          description: "Pro features are being finalized. Starting with free plan for now.",
+        // Redirect to Stripe checkout for Pro plan
+        const { data, error } = await supabase.functions.invoke('create-checkout', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
         });
-        
-        // For now, treat Pro selection as Free
-        await supabase
-          .from('profiles')
-          .update({ plan: 'free' })
-          .eq('user_id', user.id);
-          
-        navigate(nextAfterPricing({ plan: 'free' }));
+
+        if (error) throw error;
+
+        if (data?.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL received');
+        }
       }
     } catch (error) {
-      console.error('Error updating plan:', error);
+      console.error('Error selecting plan:', error);
       toast({
         title: "Something went wrong",
         description: "Please try again or contact support.",
@@ -80,6 +108,41 @@ const PricingPage = () => {
       setLoading("");
     }
   };
+
+  const handleManageBilling = async () => {
+    if (!session) return;
+    
+    setLoading('billing');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to Stripe Customer Portal
+        window.location.href = data.url;
+      } else {
+        throw new Error('No portal URL received');
+      }
+    } catch (error) {
+      console.error('Error opening billing portal:', error);
+      toast({
+        title: "Unable to open billing portal",
+        description: "Please try again or contact support.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading("");
+    }
+  };
+
+  const userIsPro = isPro(profile);
+  const planInfo = getPlanInfo(profile);
 
   if (!user) {
     return null; // Will redirect in useEffect
@@ -130,6 +193,11 @@ const PricingPage = () => {
             Start free and upgrade when you need more features. 
             Both plans include our AI-powered resume optimization.
           </p>
+          {userIsPro && (
+            <Badge className="mt-4 bg-gradient-to-r from-primary to-accent text-white">
+              Currently on {planInfo.planName} Plan
+            </Badge>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
@@ -167,18 +235,24 @@ const PricingPage = () => {
                 onClick={() => handlePlanSelect('free')}
                 disabled={loading === 'free'}
                 className="w-full"
-                variant="outline"
+                variant={userIsPro ? "outline" : "default"}
               >
-                {loading === 'free' ? "Setting up..." : "Start Free"}
+                {loading === 'free' ? "Setting up..." : userIsPro ? "Downgrade to Free" : "Start Free"}
               </Button>
             </CardContent>
           </Card>
 
           {/* Pro Plan */}
-          <Card className="relative border-primary/50 hover:shadow-lg transition-shadow">
-            <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent text-white">
-              Coming Soon
-            </Badge>
+          <Card className={`relative border-primary/50 hover:shadow-lg transition-shadow ${userIsPro ? 'ring-2 ring-primary' : ''}`}>
+            {userIsPro ? (
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent text-white">
+                Current Plan
+              </Badge>
+            ) : (
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-accent text-white">
+                Most Popular
+              </Badge>
+            )}
             <CardHeader className="text-center pb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Crown className="h-6 w-6 text-white" />
@@ -215,13 +289,23 @@ const PricingPage = () => {
                 </li>
               </ul>
 
-              <Button 
-                onClick={() => handlePlanSelect('pro')}
-                disabled={loading === 'pro'}
-                className="w-full bg-primary hover:bg-primary/90"
-              >
-                {loading === 'pro' ? "Setting up..." : "Choose Pro"}
-              </Button>
+              {userIsPro ? (
+                <Button 
+                  onClick={handleManageBilling}
+                  disabled={loading === 'billing'}
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  {loading === 'billing' ? "Opening Portal..." : "Manage Billing"}
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => handlePlanSelect('pro')}
+                  disabled={loading === 'pro'}
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  {loading === 'pro' ? "Redirecting..." : "Upgrade to Pro"}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

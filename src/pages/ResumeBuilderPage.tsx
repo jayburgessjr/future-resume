@@ -16,6 +16,8 @@ import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
 import { ExportBar } from "@/components/export/ExportBar";
 import { CompanySignalPanel } from "@/components/company/CompanySignalPanel";
+import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
+import { FeatureGuard } from "@/components/subscription/FeatureGuard";
 import { useToast } from "@/hooks/use-toast";
 
 const ResumeBuilderPage = () => {
@@ -125,6 +127,7 @@ const ResumeBuilderPage = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-3">
+                <SubscriptionBadge />
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <User className="w-3 h-3" />
                   {user.email}
@@ -229,17 +232,19 @@ const ResumeBuilderPage = () => {
                         </div>
                       </div>
                       
-                      {/* Export Bar */}
-                      <ExportBar 
-                        content={outputs.resume}
-                        title="Resume"
-                        metadata={{
-                          generatedAt: status.lastGenerated,
-                          settings,
-                          wordCount: getWordCount(outputs.resume)
-                        }}
-                        className="text-xs"
-                      />
+                      {/* Export Bar - Protected Feature */}
+                      <FeatureGuard feature="exports">
+                        <ExportBar 
+                          content={outputs.resume}
+                          title="Resume"
+                          metadata={{
+                            generatedAt: status.lastGenerated,
+                            settings,
+                            wordCount: getWordCount(outputs.resume)
+                          }}
+                          className="text-xs"
+                        />
+                      </FeatureGuard>
                     </div>
                   ) : (
                     <div className="bg-muted/30 rounded-lg p-6 min-h-[400px] flex items-center justify-center">
@@ -260,10 +265,12 @@ const ResumeBuilderPage = () => {
               <CompanySignalPanel />
             </div>
 
-            {/* Version History Section (only for authenticated users) */}
+            {/* Version History Section - Protected Feature */}
             {user && (
               <div className="lg:col-span-1">
-                <VersionHistory />
+                <FeatureGuard feature="version_history">
+                  <VersionHistory />
+                </FeatureGuard>
               </div>
             )}
           </div>

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubscriptionStore } from './subscriptionStore';
 
 interface AuthStore {
   user: User | null;
@@ -21,6 +22,13 @@ export const useAuthStore = create<AuthStore>()(
 
       setAuth: (user, session) => {
         set({ user, session, loading: false });
+        
+        // Check subscription status when user is authenticated
+        if (user && session) {
+          setTimeout(() => {
+            useSubscriptionStore.getState().checkSubscription();
+          }, 0);
+        }
       },
 
       setLoading: (loading) => {

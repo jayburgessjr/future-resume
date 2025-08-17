@@ -2,39 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* The Best Darn Job Resume Builder Design System
+Navy (#001f3f) primary, Orange (#FF851B) accent
+Clean, professional with subtle playful elements
 */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors - Navy and Orange palette */
+    --background: 0 0% 98%;
+    --foreground: 210 100% 6%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 100% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 100% 6%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Navy primary (#001f3f) */
+    --primary: 210 100% 12%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 210 100% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Orange accent (#FF851B) */
+    --accent: 32 100% 55%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 32 100% 50%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 210 100% 12%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 210 20% 45%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 210 100% 12%;
+
+    /* Custom gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px hsl(var(--primary) / 0.1);
+    --shadow-medium: 0 8px 30px hsl(var(--primary) / 0.15);
+    --shadow-accent: 0 4px 20px hsl(var(--accent) / 0.2);
+
+    /* Animation variables */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
@@ -100,6 +122,49 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
+  }
+}
+
+@layer components {
+  /* Button variants using design system */
+  .btn-hero {
+    @apply bg-gradient-to-r from-accent to-accent-hover text-accent-foreground 
+           shadow-accent hover:shadow-xl hover:scale-105 
+           px-8 py-3 rounded-lg font-semibold text-lg
+           transition-all duration-300;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-primary-foreground 
+           hover:bg-primary/90 shadow-soft hover:shadow-medium
+           px-6 py-2.5 rounded-lg font-medium
+           transition-all duration-300;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground border border-border
+           hover:bg-muted shadow-sm hover:shadow-soft
+           px-6 py-2.5 rounded-lg font-medium
+           transition-all duration-300;
+  }
+
+  /* Card styles */
+  .card-elegant {
+    @apply bg-card border border-border shadow-soft hover:shadow-medium
+           rounded-xl p-6 transition-all duration-300;
+  }
+
+  /* Hero section gradient */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+
+  /* Text animations */
+  .text-gradient {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

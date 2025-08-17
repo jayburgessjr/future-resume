@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { ToolkitAccordion } from '@/components/interview/ToolkitAccordion';
-import { generateResumeFlow } from '@/lib/resumeService';
-import { useAppSettingsStore } from '@/stores/appSettings';
+import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Brain, RefreshCw, Copy, Download, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -21,61 +19,29 @@ interface ToolkitData {
 }
 
 export default function InterviewToolkitPage() {
-  const [toolkitData, setToolkitData] = useState<ToolkitData>({});
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [lastInputs, setLastInputs] = useState<{
-    resumeContent: string;
-    jobDescription: string;
-  } | null>(null);
-  const { settings } = useAppSettingsStore();
+  const { 
+    outputs, 
+    status, 
+    settings,
+    runGeneration,
+    isReadyToGenerate,
+    getWordCount,
+    isOverLimit
+  } = useAppDataStore();
   const { toast } = useToast();
 
-  // Check for stored inputs from previous generation
-  useEffect(() => {
-    const storedInputs = localStorage.getItem('resume-generation-inputs');
-    if (storedInputs) {
-      try {
-        const parsed = JSON.parse(storedInputs);
-        setLastInputs(parsed);
-      } catch (error) {
-        console.error('Failed to parse stored inputs:', error);
-      }
-    }
-  }, []);
-
   const handleGenerate = async () => {
-    if (!lastInputs) {
+    if (!isReadyToGenerate()) {
       toast({
         title: "Missing Inputs",
-        description: "Please generate a resume first to create your interview toolkit",
+        description: "Please add resume and job description in the builder first",
         variant: "destructive",
       });
       return;
     }
 
-    setIsGenerating(true);
     try {
-      const result = await generateResumeFlow({
-        ...settings,
-        resumeContent: lastInputs.resumeContent,
-        jobDescription: lastInputs.jobDescription,
-      });
-
-      // Map the result to our toolkit data structure
-      const mappedData: ToolkitData = {
-        interviewerQuestions: result.interviewToolkit?.questions || [],
-        followUpEmail: result.interviewToolkit?.followUpEmail || '',
-        skillGaps: result.interviewToolkit?.skillGaps || [],
-        kpiDashboard: result.weeklyKPITracker || '',
-        // These would be populated when the AI logic expands
-        introScript: '',
-        carlQuestions: [],
-        soarQuestions: [],
-        learningResources: [],
-        linkedinOutreach: '',
-      };
-
-      setToolkitData(mappedData);
+      await runGeneration();
       
       toast({
         title: "Toolkit Generated!",
@@ -88,10 +54,26 @@ export default function InterviewToolkitPage() {
         description: "Please try again. Check your connection.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
+
+  // Map outputs to toolkit data
+  const toolkitData: ToolkitData = outputs ? {
+    interviewerQuestions: outputs.toolkit?.questions || [],
+    followUpEmail: outputs.toolkit?.followUpEmail || '',
+    skillGaps: outputs.toolkit?.skillGaps || [],
+    kpiDashboard: outputs.weeklyKPITracker || '',
+    // These would be populated when the AI logic expands
+    introScript: '',
+    carlQuestions: [],
+    soarQuestions: [],
+    learningResources: [],
+    linkedinOutreach: '',
+  } : {};
+
+  // Check word limits
+  const followUpWordCount = toolkitData.followUpEmail ? getWordCount(toolkitData.followUpEmail) : 0;
+  const isFollowUpOverLimit = isOverLimit(toolkitData.followUpEmail || '', 200);
 
   const handleCopyAll = async () => {
     const allContent = [
@@ -195,6 +177,7 @@ export default function InterviewToolkitPage() {
   const hasContent = Object.values(toolkitData).some(value => 
     Array.isArray(value) ? value.length > 0 : Boolean(value)
   );
+  const hasInputs = isReadyToGenerate();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -240,11 +223,11 @@ export default function InterviewToolkitPage() {
                 <Button
                   onClick={handleGenerate}
                   variant="default"
-                  disabled={isGenerating}
+                  disabled={status.loading}
                   className="btn-primary"
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-                  {isGenerating ? 'Generating...' : hasContent ? 'Refresh' : 'Generate'}
+                  <RefreshCw className={`w-4 h-4 mr-2 ${status.loading ? 'animate-spin' : ''}`} />
+                  {status.loading ? 'Generating...' : hasContent ? 'Refresh' : 'Generate'}
                 </Button>
                 
                 {hasContent && (
@@ -265,7 +248,7 @@ export default function InterviewToolkitPage() {
         </div>
 
         {/* Main Content */}
-        {!hasContent && !isGenerating && !lastInputs ? (
+        {!hasContent && !status.loading && !hasInputs ? (
           <Card className="card-elegant">
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-muted rounded-full mx-auto mb-4 flex items-center justify-center">
@@ -273,14 +256,14 @@ export default function InterviewToolkitPage() {
               </div>
               <h3 className="text-lg font-medium mb-2">No Toolkit Generated</h3>
               <p className="text-muted-foreground mb-4">
-                Generate a resume first to create your personalized interview toolkit
+                Add resume and job description in the builder first
               </p>
               <Button asChild variant="outline">
                 <Link to="/builder">Go to Resume Builder</Link>
               </Button>
             </div>
           </Card>
-        ) : isGenerating ? (
+        ) : status.loading ? (
           <Card className="card-elegant">
             <div className="flex items-center justify-center h-64">
               <div className="animate-pulse text-center">

@@ -9,15 +9,15 @@ import { Copy, Download, Edit3, Save, X } from 'lucide-react';
 interface CoverLetterPreviewProps {
   content: string;
   isGenerating: boolean;
+  wordCount: number;
+  isOverLimit: boolean;
 }
 
-export function CoverLetterPreview({ content, isGenerating }: CoverLetterPreviewProps) {
+export function CoverLetterPreview({ content, isGenerating, wordCount, isOverLimit }: CoverLetterPreviewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const { toast } = useToast();
 
-  const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
-  const isOverLimit = wordCount > 250;
   const isNearLimit = wordCount >= 230;
 
   const handleCopy = async () => {

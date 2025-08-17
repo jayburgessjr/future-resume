@@ -1,17 +1,21 @@
-import { useState } from 'react';
 import { CoverLetterForm } from '@/components/cover-letter/CoverLetterForm';
 import { CoverLetterPreview } from '@/components/cover-letter/CoverLetterPreview';
-import { generateResumeFlow } from '@/lib/resumeService';
-import { useAppSettingsStore } from '@/stores/appSettings';
+import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 export default function CoverLetterPage() {
-  const [coverLetter, setCoverLetter] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const { settings } = useAppSettingsStore();
+  const { 
+    outputs, 
+    status, 
+    inputs,
+    updateInputs, 
+    runGeneration,
+    getWordCount,
+    isOverLimit
+  } = useAppDataStore();
   const { toast } = useToast();
 
   const handleGenerate = async (data: { 
@@ -19,16 +23,16 @@ export default function CoverLetterPage() {
     jobDescription: string; 
     companySignal?: string;
   }) => {
-    setIsGenerating(true);
     try {
-      const result = await generateResumeFlow({
-        ...settings,
-        resumeContent: data.resumeContent,
-        jobDescription: data.jobDescription,
-        manualEntry: data.companySignal,
+      // Update inputs in store
+      updateInputs({
+        resumeText: data.resumeContent,
+        jobText: data.jobDescription,
+        companySignal: data.companySignal,
       });
 
-      setCoverLetter(result.coverLetter);
+      // Run generation
+      await runGeneration();
       
       toast({
         title: "Cover Letter Generated!",
@@ -41,10 +45,12 @@ export default function CoverLetterPage() {
         description: "Please try again. Check your inputs and connection.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
+
+  const coverLetter = outputs?.coverLetter || '';
+  const wordCount = getWordCount(coverLetter);
+  const isOverWordLimit = isOverLimit(coverLetter, 250);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -76,7 +82,10 @@ export default function CoverLetterPage() {
           <div className="space-y-6">
             <CoverLetterForm 
               onGenerate={handleGenerate}
-              isGenerating={isGenerating}
+              isGenerating={status.loading}
+              initialResumeContent={inputs.resumeText}
+              initialJobDescription={inputs.jobText}
+              initialCompanySignal={inputs.companySignal}
             />
           </div>
 
@@ -84,7 +93,9 @@ export default function CoverLetterPage() {
           <div className="space-y-6">
             <CoverLetterPreview 
               content={coverLetter}
-              isGenerating={isGenerating}
+              isGenerating={status.loading}
+              wordCount={wordCount}
+              isOverLimit={isOverWordLimit}
             />
           </div>
         </div>

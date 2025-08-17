@@ -1,22 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useAppSettingsStore } from '@/stores/appSettings';
+import { useAppDataStore } from '@/stores/appData';
 import { Loader2, Sparkles } from 'lucide-react';
 
 interface CoverLetterFormProps {
   onGenerate: (data: { resumeContent: string; jobDescription: string; companySignal?: string }) => void;
   isGenerating: boolean;
+  initialResumeContent?: string;
+  initialJobDescription?: string;
+  initialCompanySignal?: string;
 }
 
-export function CoverLetterForm({ onGenerate, isGenerating }: CoverLetterFormProps) {
-  const [resumeContent, setResumeContent] = useState('');
-  const [jobDescription, setJobDescription] = useState('');
-  const [companySignal, setCompanySignal] = useState('');
-  const { settings } = useAppSettingsStore();
+export function CoverLetterForm({ 
+  onGenerate, 
+  isGenerating, 
+  initialResumeContent = '',
+  initialJobDescription = '',
+  initialCompanySignal = ''
+}: CoverLetterFormProps) {
+  const [resumeContent, setResumeContent] = useState(initialResumeContent);
+  const [jobDescription, setJobDescription] = useState(initialJobDescription);
+  const [companySignal, setCompanySignal] = useState(initialCompanySignal);
+  const { settings } = useAppDataStore();
+
+  useEffect(() => {
+    setResumeContent(initialResumeContent);
+    setJobDescription(initialJobDescription);
+    setCompanySignal(initialCompanySignal);
+  }, [initialResumeContent, initialJobDescription, initialCompanySignal]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

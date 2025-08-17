@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { HighlightsCard } from '@/components/recruiter/HighlightsCard';
-import { generateResumeFlow } from '@/lib/resumeService';
-import { useAppSettingsStore } from '@/stores/appSettings';
+import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -9,47 +7,26 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 export default function RecruiterHighlightsPage() {
-  const [highlights, setHighlights] = useState<string[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [lastInputs, setLastInputs] = useState<{
-    resumeContent: string;
-    jobDescription: string;
-  } | null>(null);
-  const { settings } = useAppSettingsStore();
+  const { 
+    outputs, 
+    status, 
+    runGeneration,
+    isReadyToGenerate
+  } = useAppDataStore();
   const { toast } = useToast();
 
-  // Check for stored inputs from previous generation
-  useEffect(() => {
-    const storedInputs = localStorage.getItem('resume-generation-inputs');
-    if (storedInputs) {
-      try {
-        const parsed = JSON.parse(storedInputs);
-        setLastInputs(parsed);
-      } catch (error) {
-        console.error('Failed to parse stored inputs:', error);
-      }
-    }
-  }, []);
-
   const handleGenerate = async () => {
-    if (!lastInputs) {
+    if (!isReadyToGenerate()) {
       toast({
         title: "Missing Inputs",
-        description: "Please generate a resume first to create highlights",
+        description: "Please add resume and job description in the builder first",
         variant: "destructive",
       });
       return;
     }
 
-    setIsGenerating(true);
     try {
-      const result = await generateResumeFlow({
-        ...settings,
-        resumeContent: lastInputs.resumeContent,
-        jobDescription: lastInputs.jobDescription,
-      });
-
-      setHighlights(result.recruiterHighlights || []);
+      await runGeneration();
       
       toast({
         title: "Highlights Generated!",
@@ -62,10 +39,11 @@ export default function RecruiterHighlightsPage() {
         description: "Please try again. Check your connection.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
+
+  const highlights = outputs?.highlights || [];
+  const hasInputs = isReadyToGenerate();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -115,10 +93,10 @@ export default function RecruiterHighlightsPage() {
                   </p>
                 </div>
                 
-                {!lastInputs && (
+                {!hasInputs && (
                   <div className="mt-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
                     <p className="text-sm text-accent-foreground">
-                      💡 Generate a resume first to create personalized highlights
+                      💡 Add resume and job description in the builder first
                     </p>
                   </div>
                 )}
@@ -130,11 +108,11 @@ export default function RecruiterHighlightsPage() {
           <div className="lg:col-span-2">
             <HighlightsCard
               highlights={highlights}
-              isGenerating={isGenerating}
+              isGenerating={status.loading}
               onRefresh={handleGenerate}
               currentSettings={{
-                mode: settings.mode,
-                voice: settings.voice,
+                mode: useAppDataStore.getState().settings.mode,
+                voice: useAppDataStore.getState().settings.voice,
               }}
             />
           </div>

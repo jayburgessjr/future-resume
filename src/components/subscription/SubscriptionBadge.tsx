@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Crown, Settings } from "lucide-react";
+import { Crown, Settings, Sparkles } from "lucide-react";
 import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { useState } from "react";
 import { UpgradeModal } from "./UpgradeModal";
@@ -31,14 +31,18 @@ export const SubscriptionBadge = () => {
 
   return (
     <>
+      <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 flex items-center gap-1">
+        <Sparkles className="h-3 w-3" />
+        Free Trial
+      </Badge>
       <Button
-        variant="accent"
+        variant="outline"
         size="sm"
         onClick={() => setShowUpgradeModal(true)}
-        className="flex items-center gap-1"
+        className="flex items-center gap-1 hover:bg-accent/10"
       >
         <Crown className="h-3 w-3" />
-        Upgrade
+        Upgrade to Pro
       </Button>
       
       <UpgradeModal 

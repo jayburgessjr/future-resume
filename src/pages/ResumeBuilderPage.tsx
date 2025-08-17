@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ArrowLeft, ArrowRight, Upload, FileText, Sparkles, User, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -126,6 +127,7 @@ const ResumeBuilderPage = () => {
           </Link>
           
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             {user ? (
               <div className="flex items-center space-x-3">
                 <SubscriptionBadge />
@@ -155,9 +157,9 @@ const ResumeBuilderPage = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-5 gap-8">
+          <div className="grid lg:grid-cols-12 gap-8">
             {/* Form Section */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-4">
               <Card className="card-elegant">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -208,7 +210,7 @@ const ResumeBuilderPage = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-4">
               <Card className="card-elegant sticky top-24">
                 <CardHeader>
                   <CardTitle className="text-lg">Preview</CardTitle>
@@ -262,13 +264,13 @@ const ResumeBuilderPage = () => {
             </div>
 
             {/* Company Signal Panel */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2">
               <CompanySignalPanel />
             </div>
 
             {/* Version History Section - Protected Feature */}
             {user && (
-              <div className="lg:col-span-1">
+              <div className="lg:col-span-2">
                 <FeatureGuard feature="version_history">
                   <VersionHistory />
                 </FeatureGuard>

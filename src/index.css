@@ -119,6 +119,10 @@ Clean, professional with subtle playful elements
   }
 
   .dark {
+    /* Brand Colors in dark mode */
+    --brand-navy: 210 100% 85%;
+    --brand-orange: 32 100% 65%;
+    
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -128,8 +132,27 @@ Clean, professional with subtle playful elements
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    /* Navy primary adapted for dark mode */
+    --primary: 210 100% 85%;
     --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-hover: 210 100% 75%;
+
+    /* Orange accent adapted for dark mode */
+    --accent: 32 100% 65%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent-hover: 32 100% 60%;
+
+    /* Neutral scale for dark mode */
+    --neutral-50: 210 20% 10%;
+    --neutral-100: 210 20% 15%;
+    --neutral-200: 210 20% 20%;
+    --neutral-300: 210 20% 30%;
+    --neutral-400: 210 20% 50%;
+    --neutral-500: 210 20% 65%;
+    --neutral-600: 210 20% 75%;
+    --neutral-700: 210 20% 85%;
+    --neutral-800: 210 20% 90%;
+    --neutral-900: 210 20% 95%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -137,15 +160,13 @@ Clean, professional with subtle playful elements
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -154,6 +175,11 @@ Clean, professional with subtle playful elements
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom gradients for dark mode */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
   }
 }
 
@@ -227,6 +253,19 @@ Clean, professional with subtle playful elements
     @apply bg-card border border-border shadow-soft 
            hover:shadow-medium hover:scale-[1.01] hover:opacity-95
            rounded-xl p-6 transition-all duration-200 ease-out;
+  }
+
+  .card-elegant {
+    @apply bg-card/50 backdrop-blur-sm border border-border/50 shadow-soft 
+           hover:shadow-medium hover:scale-[1.01] hover:border-border
+           rounded-xl p-6 transition-all duration-300 ease-out;
+  }
+
+  .card-interactive {
+    @apply bg-card border border-border shadow-soft 
+           hover:shadow-medium hover:scale-[1.02] hover:bg-accent/5
+           rounded-xl p-6 transition-all duration-200 ease-out
+           cursor-pointer;
   }
 
   /* Input component */

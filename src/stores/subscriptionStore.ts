@@ -106,6 +106,6 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
   getResumeLimit: () => {
     const { subscribed } = get();
-    return subscribed ? Infinity : 1;
+    return subscribed ? Infinity : 3; // 3 resumes during free trial
   }
 }));

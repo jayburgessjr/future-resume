@@ -4,9 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistenceStore } from "@/stores/persistenceStore";
-import LandingPage from "./pages/LandingPage";
+import ModernLandingPage from "./pages/ModernLandingPage";
 import ResumeBuilderPage from "./pages/ResumeBuilderPage";
 import CoverLetterPage from "./pages/CoverLetterPage";
 import RecruiterHighlightsPage from "./pages/RecruiterHighlightsPage";
@@ -28,7 +29,7 @@ function AuthenticatedApp() {
 
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<ModernLandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/builder" replace /> : <AuthPage />} />
       <Route path="/builder" element={<ResumeBuilderPage />} />
       <Route path="/cover-letter" element={<CoverLetterPage />} />
@@ -42,13 +43,20 @@ function AuthenticatedApp() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthenticatedApp />
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthenticatedApp />
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

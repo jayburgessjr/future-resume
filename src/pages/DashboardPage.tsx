@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { MasterResumeCard } from "@/components/dashboard/MasterResumeCard";
 import { JobList } from "@/components/dashboard/JobList";
+import { ToolkitsList } from "@/components/dashboard/ToolkitsList";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { ConfirmDialog } from "@/components/dashboard/ConfirmDialog";
@@ -24,7 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   LayoutDashboard, 
   FileText, 
-  Briefcase, 
+  Briefcase,
+  Package,
   ArrowLeft,
   TrendingUp,
   AlertTriangle,
@@ -41,6 +43,7 @@ const DashboardPage = () => {
   const { 
     jobs, 
     resumes, 
+    toolkits,
     masterResume, 
     loading, 
     error,
@@ -353,6 +356,19 @@ const DashboardPage = () => {
                   onSendToBuilder={handleSendToBuilder}
                   onArchive={handleArchiveJob}
                   onDelete={handleDeleteJob}
+                />
+              </section>
+
+              {/* Job Toolkits Section */}
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <Package className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Job Toolkits</h2>
+                  <Badge variant="outline">{toolkits.length}</Badge>
+                </div>
+                <ToolkitsList
+                  toolkits={toolkits}
+                  onCreateNew={() => navigate('/builder')}
                 />
               </section>
             </div>

@@ -22,9 +22,22 @@ export interface Resume {
   updated_at: string;
 }
 
+export interface Toolkit {
+  id: string;
+  title: string;
+  job_title: string;
+  company: string;
+  settings: any;
+  inputs: any;
+  outputs: any;
+  favorite: boolean;
+  created_at: string;
+}
+
 export interface DashboardState {
   jobs: Job[];
   resumes: Resume[];
+  toolkits: Toolkit[];
   masterResume: Resume | null;
   loading: boolean;
   error: string | null;
@@ -49,6 +62,11 @@ export interface DashboardState {
     outputs: any;
   }) => Promise<void>;
   
+  // Toolkit actions
+  loadToolkits: () => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
+  deleteToolkit: (id: string) => Promise<void>;
+  
   // UI helpers
   getJobById: (id: string) => Job | undefined;
   getSkillGaps: (jobDescription: string, masterResumeText: string) => { missing: string[]; present: string[] };
@@ -57,6 +75,7 @@ export interface DashboardState {
 export const useDashboardStore = create<DashboardState>((set, get) => ({
   jobs: [],
   resumes: [],
+  toolkits: [],
   masterResume: null,
   loading: false,
   error: null,
@@ -77,8 +96,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       if (!profile) throw new Error('Profile not found');
 
-      // Load jobs and resumes in parallel
-      const [jobsResult, resumesResult] = await Promise.all([
+      // Load jobs, resumes, and toolkits in parallel
+      const [jobsResult, resumesResult, toolkitsResult] = await Promise.all([
         supabase
           .from('jobs')
           .select('*')
@@ -90,11 +109,18 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           .from('resumes')
           .select('id, title, is_master, created_at, updated_at')
           .eq('profile_id', profile.id)
+          .order('created_at', { ascending: false }),
+          
+        supabase
+          .from('toolkits')
+          .select('*')
+          .eq('profile_id', profile.id)
           .order('created_at', { ascending: false })
       ]);
 
       if (jobsResult.error) throw jobsResult.error;
       if (resumesResult.error) throw resumesResult.error;
+      if (toolkitsResult.error) throw toolkitsResult.error;
 
       const resumes = resumesResult.data || [];
       const masterResume = resumes.find(r => r.is_master) || null;
@@ -102,6 +128,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       set({
         jobs: jobsResult.data || [],
         resumes,
+        toolkits: toolkitsResult.data || [],
         masterResume,
         loading: false
       });
@@ -352,7 +379,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       if (!profile) throw new Error('Profile not found');
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('toolkits')
         .insert({
           profile_id: profile.id,
@@ -362,11 +389,87 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           settings: toolkit.settings,
           inputs: toolkit.inputs,
           outputs: toolkit.outputs,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Add to local state
+      set(state => ({
+        toolkits: [data, ...state.toolkits]
+      }));
     } catch (error) {
       console.error('Error saving toolkit:', error);
+      throw error;
+    }
+  },
+
+  loadToolkits: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
+      const { data, error } = await supabase
+        .from('toolkits')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      set({ toolkits: data || [] });
+    } catch (error) {
+      console.error('Error loading toolkits:', error);
+      throw error;
+    }
+  },
+
+  toggleFavorite: async (id) => {
+    try {
+      const toolkit = get().toolkits.find(t => t.id === id);
+      if (!toolkit) throw new Error('Toolkit not found');
+
+      const { error } = await supabase
+        .from('toolkits')
+        .update({ favorite: !toolkit.favorite })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set(state => ({
+        toolkits: state.toolkits.map(t =>
+          t.id === id ? { ...t, favorite: !t.favorite } : t
+        )
+      }));
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      throw error;
+    }
+  },
+
+  deleteToolkit: async (id) => {
+    try {
+      const { error } = await supabase
+        .from('toolkits')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set(state => ({
+        toolkits: state.toolkits.filter(t => t.id !== id)
+      }));
+    } catch (error) {
+      console.error('Error deleting toolkit:', error);
       throw error;
     }
   }

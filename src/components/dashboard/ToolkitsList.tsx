@@ -124,18 +124,13 @@ export const ToolkitsList = ({ toolkits, onCreateNew }: ToolkitsListProps) => {
   };
 
   const handleSendToBuilder = (toolkit: Toolkit) => {
-    // Load the toolkit data into the app store
-    updateInputs(toolkit.inputs || {});
-    updateSettings(toolkit.settings || {});
-    // Note: outputs are read-only in the app store, they get generated
-
     toast({
-      title: "Loaded into builder",
-      description: `${toolkit.title} loaded into the resume builder.`,
+      title: "Loading into builder",
+      description: `${toolkit.title} is being loaded into the resume builder.`,
     });
 
-    // Navigate to the interview step (final step)
-    navigate('/builder?step=interview');
+    // Navigate to builder with toolkit ID - the BuilderFlowPage will handle loading
+    navigate(`/builder?toolkit=${toolkit.id}`);
   };
 
   const handleDelete = (toolkit: Toolkit) => {

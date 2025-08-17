@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { generateResumeFlow, ResumeGenerationParams, ResumeGenerationResult } from '@/lib/resumeService';
 import { usePersistenceStore } from './persistenceStore';
 import { performGreatnessCheck, logQualityAssessment } from '@/lib/qualityCheck';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AppSettings {
   mode: 'concise' | 'detailed' | 'executive';
@@ -55,11 +56,13 @@ interface AppDataStore {
   updateInputs: (newInputs: Partial<AppInputs>) => void;
   runGeneration: () => Promise<void>;
   clearData: () => void;
+  loadToolkitIntoBuilder: (toolkitId: string) => Promise<void>;
   
   // Getters
   getWordCount: (content: string) => number;
   isOverLimit: (content: string, limit: number) => boolean;
   isReadyToGenerate: () => boolean;
+  getFirstIncompleteStep: () => 'resume' | 'cover-letter' | 'highlights' | 'interview';
 }
 
 const defaultSettings: AppSettings = {
@@ -203,6 +206,89 @@ export const useAppDataStore = create<AppDataStore>()(
           state.inputs.resumeText.trim().length >= 50 &&
           state.inputs.jobText.trim().length >= 50
         );
+      },
+
+      loadToolkitIntoBuilder: async (toolkitId: string) => {
+        try {
+          const { data: toolkit, error } = await supabase
+            .from('toolkits')
+            .select('*')
+            .eq('id', toolkitId)
+            .single();
+
+          if (error) throw error;
+          if (!toolkit) throw new Error('Toolkit not found');
+
+          // Safely parse toolkit data
+          const settings = (typeof toolkit.settings === 'object' && toolkit.settings !== null) 
+            ? toolkit.settings as Record<string, any> 
+            : {};
+          const inputs = (typeof toolkit.inputs === 'object' && toolkit.inputs !== null) 
+            ? toolkit.inputs as Record<string, any> 
+            : {};
+          const outputs = (typeof toolkit.outputs === 'object' && toolkit.outputs !== null) 
+            ? toolkit.outputs as Record<string, any> 
+            : {};
+
+          // Convert toolkit outputs to app outputs format
+          const appOutputs: AppOutputs = {
+            resume: (typeof outputs.resume === 'string') ? outputs.resume : '',
+            coverLetter: (typeof outputs.coverLetter === 'string') ? outputs.coverLetter : '',
+            highlights: Array.isArray(outputs.highlights) ? outputs.highlights : [],
+            toolkit: (typeof outputs.interviewToolkit === 'object' && outputs.interviewToolkit !== null) 
+              ? outputs.interviewToolkit as any 
+              : {
+                  questions: [],
+                  followUpEmail: '',
+                  skillGaps: []
+                },
+            weeklyKPITracker: (typeof outputs.weeklyKPITracker === 'string') ? outputs.weeklyKPITracker : '',
+            metadata: (typeof outputs.metadata === 'object' && outputs.metadata !== null) 
+              ? outputs.metadata as any 
+              : {
+                  phase: 'complete',
+                  optimizationScore: 0,
+                  keywordsMatched: 0,
+                  wordCount: 0
+                }
+          };
+
+          set({
+            settings: { ...defaultSettings, ...settings },
+            inputs: { ...defaultInputs, ...inputs },
+            outputs: appOutputs,
+            status: {
+              hasRun: true,
+              loading: false,
+              lastGenerated: new Date(toolkit.created_at)
+            }
+          });
+
+        } catch (error) {
+          console.error('Error loading toolkit into builder:', error);
+          throw error;
+        }
+      },
+
+      getFirstIncompleteStep: () => {
+        const state = get();
+        const outputs = state.outputs;
+
+        if (!outputs || !outputs.resume) {
+          return 'resume';
+        }
+        if (!outputs.coverLetter) {
+          return 'cover-letter';
+        }
+        if (!outputs.highlights || outputs.highlights.length === 0) {
+          return 'highlights';
+        }
+        if (!outputs.toolkit || (!outputs.toolkit.questions || outputs.toolkit.questions.length === 0)) {
+          return 'interview';
+        }
+        
+        // All steps complete, go to final step
+        return 'interview';
       },
     }),
     {

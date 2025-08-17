@@ -31,12 +31,44 @@ const BuilderFlowPage = () => {
     currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume'
   );
 
-  const { settings, inputs, outputs, status } = useAppDataStore();
+  const { settings, inputs, outputs, status, loadToolkitIntoBuilder, getFirstIncompleteStep } = useAppDataStore();
 
   useEffect(() => {
-    // Update URL when step changes
-    setSearchParams({ step: currentStep });
-  }, [currentStep, setSearchParams]);
+    // Handle toolkit loading from URL params
+    const toolkitId = searchParams.get('toolkit');
+    if (toolkitId) {
+      loadToolkitIntoBuilder(toolkitId).then(() => {
+        // After loading, determine the appropriate step
+        const firstIncompleteStep = getFirstIncompleteStep();
+        setCurrentStep(firstIncompleteStep);
+        // Clean up URL
+        setSearchParams({ step: firstIncompleteStep });
+      }).catch((error) => {
+        console.error('Error loading toolkit:', error);
+        // If loading fails, start from the beginning
+        setCurrentStep('resume');
+        setSearchParams({ step: 'resume' });
+      });
+    } else {
+      // Normal step handling
+      const requestedStep = currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume';
+      // If we have outputs, route to appropriate step based on completion
+      if (outputs) {
+        const firstIncompleteStep = getFirstIncompleteStep();
+        setCurrentStep(requestedStep === 'resume' ? firstIncompleteStep : requestedStep);
+      } else {
+        setCurrentStep(requestedStep);
+      }
+    }
+  }, [searchParams, loadToolkitIntoBuilder, getFirstIncompleteStep, outputs, currentStepParam]);
+
+  useEffect(() => {
+    // Update URL when step changes (but not during toolkit loading)
+    const toolkitId = searchParams.get('toolkit');
+    if (!toolkitId) {
+      setSearchParams({ step: currentStep });
+    }
+  }, [currentStep, setSearchParams, searchParams]);
 
   const handleSignOut = async () => {
     await signOut();

@@ -20,6 +20,8 @@ import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
 import { ReturnToGate } from "./components/auth/ReturnToGate";
 import { AuthGuard } from "./components/auth/AuthGuard";
+import { AdminGuard } from "./components/auth/AdminGuard";
+import { AdminPage } from "./pages/admin/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +52,9 @@ function AuthenticatedApp() {
       <Route path="/cover-letter" element={<AuthGuard><CoverLetterPage /></AuthGuard>} />
       <Route path="/recruiter-highlights" element={<AuthGuard><RecruiterHighlightsPage /></AuthGuard>} />
       <Route path="/interview-toolkit" element={<AuthGuard><InterviewToolkitPage /></AuthGuard>} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AuthGuard><AdminGuard><AdminPage /></AdminGuard></AuthGuard>} />
       
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { MasterResumeCard } from "@/components/dashboard/MasterResumeCard";
 import { JobList } from "@/components/dashboard/JobList";
 import { ToolkitsList } from "@/components/dashboard/ToolkitsList";
@@ -31,7 +32,8 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  X
+  X,
+  Shield
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -39,6 +41,7 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isAdmin } = useAdminStatus();
   
   const { 
     jobs, 
@@ -296,6 +299,14 @@ const DashboardPage = () => {
           </div>
           
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/admin" className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </Link>
+              </Button>
+            )}
             <ThemeToggle />
             <SubscriptionBadge />
           </div>

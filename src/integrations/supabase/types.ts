@@ -167,6 +167,45 @@ export type Database = {
           },
         ]
       }
+      toolkits: {
+        Row: {
+          company: string
+          created_at: string
+          favorite: boolean
+          id: string
+          inputs: Json
+          job_title: string
+          outputs: Json
+          profile_id: string
+          settings: Json
+          title: string
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          favorite?: boolean
+          id?: string
+          inputs: Json
+          job_title: string
+          outputs: Json
+          profile_id: string
+          settings: Json
+          title: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          favorite?: boolean
+          id?: string
+          inputs?: Json
+          job_title?: string
+          outputs?: Json
+          profile_id?: string
+          settings?: Json
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

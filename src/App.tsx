@@ -8,7 +8,7 @@ import { ThemeProvider } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import ModernLandingPage from "./pages/ModernLandingPage";
-import ResumeBuilderPage from "./pages/ResumeBuilderPage";
+import BuilderFlowPage from "./pages/BuilderFlowPage";
 import CoverLetterPage from "./pages/CoverLetterPage";
 import RecruiterHighlightsPage from "./pages/RecruiterHighlightsPage";
 import InterviewToolkitPage from "./pages/InterviewToolkitPage";
@@ -33,7 +33,7 @@ function AuthenticatedApp() {
       <Route path="/" element={<ModernLandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
       <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} />
-      <Route path="/builder" element={<ResumeBuilderPage />} />
+      <Route path="/builder" element={<BuilderFlowPage />} />
       <Route path="/cover-letter" element={<CoverLetterPage />} />
       <Route path="/recruiter-highlights" element={<RecruiterHighlightsPage />} />
       <Route path="/interview-toolkit" element={<InterviewToolkitPage />} />

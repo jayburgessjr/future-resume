@@ -40,6 +40,15 @@ export interface DashboardState {
   setAsMaster: (resumeId: string) => Promise<void>;
   deleteResume: (id: string) => Promise<void>;
   
+  saveToolkit: (toolkit: {
+    title: string;
+    job_title: string;
+    company: string;
+    settings: any;
+    inputs: any;
+    outputs: any;
+  }) => Promise<void>;
+  
   // UI helpers
   getJobById: (id: string) => Job | undefined;
   getSkillGaps: (jobDescription: string, masterResumeText: string) => { missing: string[]; present: string[] };
@@ -328,5 +337,37 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     );
 
     return { missing, present };
+  },
+
+  saveToolkit: async (toolkit) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) throw new Error('Profile not found');
+
+      const { error } = await supabase
+        .from('toolkits')
+        .insert({
+          profile_id: profile.id,
+          title: toolkit.title,
+          job_title: toolkit.job_title,
+          company: toolkit.company,
+          settings: toolkit.settings,
+          inputs: toolkit.inputs,
+          outputs: toolkit.outputs,
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving toolkit:', error);
+      throw error;
+    }
   }
 }));

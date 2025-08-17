@@ -15,6 +15,8 @@ interface AppInputs {
   resumeText: string;
   jobText: string;
   companySignal?: string;
+  companyName?: string;
+  companyUrl?: string;
 }
 
 interface AppOutputs {
@@ -71,6 +73,8 @@ const defaultInputs: AppInputs = {
   resumeText: '',
   jobText: '',
   companySignal: '',
+  companyName: '',
+  companyUrl: '',
 };
 
 const defaultStatus: AppStatus = {

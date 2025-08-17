@@ -9,6 +9,8 @@ interface ResumeVersion {
     resumeText: string;
     jobText: string;
     companySignal?: string;
+    companyName?: string;
+    companyUrl?: string;
   };
   outputs: {
     resume: string;

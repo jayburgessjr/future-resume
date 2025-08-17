@@ -15,6 +15,7 @@ import { useAppDataStore } from "@/stores/appData";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
 import { ExportBar } from "@/components/export/ExportBar";
+import { CompanySignalPanel } from "@/components/company/CompanySignalPanel";
 import { useToast } from "@/hooks/use-toast";
 
 const ResumeBuilderPage = () => {
@@ -150,7 +151,7 @@ const ResumeBuilderPage = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-4 gap-8">
+          <div className="grid lg:grid-cols-5 gap-8">
             {/* Form Section */}
             <div className="lg:col-span-2">
               <Card className="card-elegant">
@@ -252,6 +253,11 @@ const ResumeBuilderPage = () => {
                   )}
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Company Signal Panel */}
+            <div className="lg:col-span-1">
+              <CompanySignalPanel />
             </div>
 
             {/* Version History Section (only for authenticated users) */}

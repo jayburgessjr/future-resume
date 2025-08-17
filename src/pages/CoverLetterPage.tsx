@@ -1,6 +1,7 @@
 import { CoverLetterForm } from '@/components/cover-letter/CoverLetterForm';
 import { CoverLetterPreview } from '@/components/cover-letter/CoverLetterPreview';
 import { ExportBar } from '@/components/export/ExportBar';
+import { CompanySignalPanel } from '@/components/company/CompanySignalPanel';
 import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
@@ -50,6 +51,31 @@ export default function CoverLetterPage() {
     }
   };
 
+  const handleInsertSignal = async () => {
+    if (!inputs.companySignal) {
+      toast({
+        title: "No Company Signal",
+        description: "Please add a company signal first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await runGeneration();
+      toast({
+        title: "Cover Letter Updated!",
+        description: "Company signal has been woven into your cover letter",
+      });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Please check your inputs and try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const coverLetter = outputs?.coverLetter || '';
   const wordCount = getWordCount(coverLetter);
   const isOverWordLimit = isOverLimit(coverLetter, 250);
@@ -79,9 +105,9 @@ export default function CoverLetterPage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Form */}
-          <div className="space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             <CoverLetterForm 
               onGenerate={handleGenerate}
               isGenerating={status.loading}
@@ -92,7 +118,7 @@ export default function CoverLetterPage() {
           </div>
 
           {/* Preview */}
-          <div className="space-y-6">
+          <div className="lg:col-span-1 space-y-6">
             <CoverLetterPreview 
               content={coverLetter}
               isGenerating={status.loading}
@@ -113,6 +139,14 @@ export default function CoverLetterPage() {
                 showWordCount={false}
               />
             )}
+          </div>
+
+          {/* Company Signal Panel */}
+          <div className="lg:col-span-1">
+            <CompanySignalPanel 
+              showInsertButton={true}
+              onInsert={handleInsertSignal}
+            />
           </div>
         </div>
 

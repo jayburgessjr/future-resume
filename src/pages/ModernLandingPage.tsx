@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import robotWritingResume from "@/assets/robot-writing-resume.jpg";
 
 const ModernLandingPage = () => {
   const { user } = useAuth();
@@ -140,31 +141,33 @@ const ModernLandingPage = () => {
                 <CardContent className="p-8">
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-2xl font-bold">Dashboard Preview</h3>
-                      <Badge className="bg-gradient-to-r from-primary to-accent text-white">Live</Badge>
+                      <h3 className="text-2xl font-bold">AI-Powered Resume Creation</h3>
+                      <Badge className="bg-gradient-to-r from-primary to-accent text-white">AI</Badge>
                     </div>
                     
-                    {/* Mock Dashboard */}
-                    <div className="space-y-4">
-                      <div className="h-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full"></div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-primary/10 rounded-lg p-4 text-center">
-                          <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-                          <p className="text-sm font-semibold">98% Match</p>
-                        </div>
-                        <div className="bg-accent/10 rounded-lg p-4 text-center">
-                          <Target className="h-6 w-6 text-accent mx-auto mb-2" />
-                          <p className="text-sm font-semibold">ATS Ready</p>
-                        </div>
-                        <div className="bg-primary/10 rounded-lg p-4 text-center">
-                          <Award className="h-6 w-6 text-primary mx-auto mb-2" />
-                          <p className="text-sm font-semibold">Pro Quality</p>
-                        </div>
+                    {/* AI Robot Image */}
+                    <div className="relative rounded-2xl overflow-hidden">
+                      <img 
+                        src={robotWritingResume} 
+                        alt="AI Robot writing a professional resume"
+                        className="w-full h-auto object-cover rounded-2xl shadow-lg"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
+                    </div>
+                    
+                    {/* Benefits Below Image */}
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                      <div className="bg-primary/10 rounded-lg p-4 text-center">
+                        <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
+                        <p className="text-sm font-semibold">98% Match</p>
                       </div>
-                      <div className="space-y-2">
-                        <div className="h-3 bg-gradient-to-r from-primary/30 to-transparent rounded"></div>
-                        <div className="h-3 bg-gradient-to-r from-accent/30 to-transparent rounded w-4/5"></div>
-                        <div className="h-3 bg-gradient-to-r from-primary/30 to-transparent rounded w-3/5"></div>
+                      <div className="bg-accent/10 rounded-lg p-4 text-center">
+                        <Target className="h-6 w-6 text-accent mx-auto mb-2" />
+                        <p className="text-sm font-semibold">ATS Ready</p>
+                      </div>
+                      <div className="bg-primary/10 rounded-lg p-4 text-center">
+                        <Award className="h-6 w-6 text-primary mx-auto mb-2" />
+                        <p className="text-sm font-semibold">Pro Quality</p>
                       </div>
                     </div>
                   </div>

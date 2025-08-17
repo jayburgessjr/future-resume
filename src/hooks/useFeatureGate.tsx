@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { canAccess, isPro } from '@/lib/entitlements';
 import { UpsellModal } from '@/components/subscription/UpsellModal';
+
+interface FeatureGateProps {
+  feature: string;
+  profile?: any;
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+}
 
 /**
  * Hook for feature gating with upsell modal
@@ -20,16 +27,11 @@ export const useFeatureGate = () => {
     return false;
   };
 
-  const FeatureGate = ({ 
+  const FeatureGate: React.FC<FeatureGateProps> = ({ 
     feature, 
     profile, 
     children, 
     fallback 
-  }: { 
-    feature: string; 
-    profile?: any; 
-    children: React.ReactNode; 
-    fallback?: React.ReactNode;
   }) => {
     if (canAccess(feature, profile)) {
       return <>{children}</>;

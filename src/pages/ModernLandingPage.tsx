@@ -18,8 +18,11 @@ import {
   Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const ModernLandingPage = () => {
+  const { user } = useAuth();
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
@@ -39,15 +42,25 @@ const ModernLandingPage = () => {
           </div>
           <div className="flex items-center space-x-3">
             <ThemeToggle />
-            <Button asChild variant="outline" size="sm">
-              <Link to="/dashboard">Dashboard</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/auth">Sign In</Link>
-            </Button>
-            <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
-              <Link to="/auth">Start Free Trial</Link>
-            </Button>
+            {user ? (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
+                  <Link to="/builder">Resume Builder</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/auth/sign-in">Sign In</Link>
+                </Button>
+                <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
+                  <Link to="/auth/sign-up">Start Free</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -80,7 +93,7 @@ const ModernLandingPage = () => {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg" className="bg-gradient-to-r from-primary to-accent text-white text-lg px-8 py-4 hover:scale-105 transition-transform">
-                  <Link to="/auth">
+                  <Link to="/auth/sign-up">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -300,7 +313,7 @@ const ModernLandingPage = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
-                  <Link to="/auth">
+                  <Link to="/auth/sign-up">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

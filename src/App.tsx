@@ -13,8 +13,13 @@ import CoverLetterPage from "./pages/CoverLetterPage";
 import RecruiterHighlightsPage from "./pages/RecruiterHighlightsPage";
 import InterviewToolkitPage from "./pages/InterviewToolkitPage";
 import AuthPage from "./pages/AuthPage";
+import AuthSignIn from "./pages/AuthSignIn";
+import AuthSignUp from "./pages/AuthSignUp";
+import PricingPage from "./pages/PricingPage";
 import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
+import { ReturnToGate } from "./components/auth/ReturnToGate";
+import { AuthGuard } from "./components/auth/AuthGuard";
 
 const queryClient = new QueryClient();
 
@@ -30,14 +35,23 @@ function AuthenticatedApp() {
 
   return (
     <Routes>
-      <Route path="/" element={<ModernLandingPage />} />
+      {/* Public Routes */}
+      <Route path="/" element={<ReturnToGate><ModernLandingPage /></ReturnToGate>} />
+      <Route path="/auth/sign-in" element={<ReturnToGate><AuthSignIn /></ReturnToGate>} />
+      <Route path="/auth/sign-up" element={<ReturnToGate><AuthSignUp /></ReturnToGate>} />
+      <Route path="/pricing" element={<PricingPage />} />
+      
+      {/* Legacy auth route */}
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
-      <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} />
-      <Route path="/builder" element={<BuilderFlowPage />} />
-      <Route path="/cover-letter" element={<CoverLetterPage />} />
-      <Route path="/recruiter-highlights" element={<RecruiterHighlightsPage />} />
-      <Route path="/interview-toolkit" element={<InterviewToolkitPage />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={<AuthGuard><DashboardPage /></AuthGuard>} />
+      <Route path="/builder" element={<AuthGuard><BuilderFlowPage /></AuthGuard>} />
+      <Route path="/cover-letter" element={<AuthGuard><CoverLetterPage /></AuthGuard>} />
+      <Route path="/recruiter-highlights" element={<AuthGuard><RecruiterHighlightsPage /></AuthGuard>} />
+      <Route path="/interview-toolkit" element={<AuthGuard><InterviewToolkitPage /></AuthGuard>} />
+      
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

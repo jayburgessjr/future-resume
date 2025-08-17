@@ -67,6 +67,7 @@ export type Database = {
           current_period_end: string | null
           email: string
           id: string
+          is_admin: boolean
           last_active_at: string | null
           onboarding_status: string | null
           plan: string | null
@@ -83,6 +84,7 @@ export type Database = {
           current_period_end?: string | null
           email: string
           id?: string
+          is_admin?: boolean
           last_active_at?: string | null
           onboarding_status?: string | null
           plan?: string | null
@@ -99,6 +101,7 @@ export type Database = {
           current_period_end?: string | null
           email?: string
           id?: string
+          is_admin?: boolean
           last_active_at?: string | null
           onboarding_status?: string | null
           plan?: string | null
@@ -226,7 +229,48 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      _assert_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      admin_analytics_summary: {
+        Args: { days?: number }
+        Returns: Json
+      }
+      admin_me_is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      admin_toolkits_list: {
+        Args: { limit_param?: number; offset_param?: number; search?: string }
+        Returns: {
+          company: string
+          created_at: string
+          id: string
+          job_title: string
+          profile_id: string
+          title: string
+          user_email: string
+        }[]
+      }
+      admin_users_list: {
+        Args: {
+          limit_param?: number
+          offset_param?: number
+          plan_filter?: string
+          search?: string
+        }
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          is_admin: boolean
+          last_active_at: string
+          plan: string
+          sub_status: string
+          toolkits_count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

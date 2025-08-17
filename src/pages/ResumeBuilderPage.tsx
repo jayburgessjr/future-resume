@@ -9,14 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { ArrowLeft, ArrowRight, Upload, FileText, Sparkles, User, LogOut } from "lucide-react";
+import { ArrowLeft, ArrowRight, Upload, FileText, Sparkles, User, LogOut, Settings, PenTool, Building2, Eye, Target } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDataStore } from "@/stores/appData";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
 import { ExportBar } from "@/components/export/ExportBar";
-import { CompanySignalPanel } from "@/components/company/CompanySignalPanel";
+import { CompanySignalStep } from "@/components/builder/CompanySignalStep";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { FeatureGuard } from "@/components/subscription/FeatureGuard";
 import { QAPanel } from "@/components/qa/QAPanel";
@@ -43,7 +43,7 @@ const ResumeBuilderPage = () => {
 
   const { loadVersions, currentResumeId } = usePersistenceStore();
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progress = (currentStep / totalSteps) * 100;
 
   useEffect(() => {
@@ -94,6 +94,8 @@ const ResumeBuilderPage = () => {
       case 3:
         return <JobDescriptionStep inputs={inputs} updateInputs={updateInputs} />;
       case 4:
+        return <CompanySignalStep />;
+      case 5:
         return <PreviewStep settings={settings} inputs={inputs} outputs={outputs} />;
       default:
         return <ConfigurationStep settings={settings} updateSettings={updateSettings} />;
@@ -109,6 +111,8 @@ const ResumeBuilderPage = () => {
       case 3:
         return inputs.jobText.trim().length >= 50;
       case 4:
+        return true; // Company signal is optional
+      case 5:
         return isReadyToGenerate();
       default:
         return true;
@@ -116,14 +120,20 @@ const ResumeBuilderPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
       {/* Header */}
-      <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            <FileText className="h-8 w-8 text-accent" />
-            <h1 className="text-xl font-bold text-foreground">Resume Builder</h1>
+          <Link to="/" className="flex items-center space-x-3 group">
+            <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+            <div className="relative">
+              <FileText className="h-8 w-8 text-accent" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full"></div>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Resume Builder Pro</h1>
+              <p className="text-xs text-muted-foreground">AI-Powered Career Success</p>
+            </div>
           </Link>
           
           <div className="flex items-center space-x-4">
@@ -131,11 +141,11 @@ const ResumeBuilderPage = () => {
             {user ? (
               <div className="flex items-center space-x-3">
                 <SubscriptionBadge />
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary border-primary/20">
                   <User className="w-3 h-3" />
-                  {user.email}
+                  {user.email?.split('@')[0]}
                 </Badge>
-                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
                   <LogOut className="w-4 h-4 mr-1" />
                   Sign Out
                 </Button>
@@ -145,41 +155,70 @@ const ResumeBuilderPage = () => {
                 <Link to="/auth">Sign In</Link>
               </Button>
             )}
-            
-            <div className="text-sm text-muted-foreground">
-              Step {currentStep} of {totalSteps}
-            </div>
-            <Progress value={progress} className="w-32" />
           </div>
         </div>
       </header>
 
+      {/* Progress Section */}
+      <div className="border-b border-border/50 bg-background/60 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <div key={step} className="flex items-center gap-2">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                    step < currentStep ? 'bg-primary text-white' : 
+                    step === currentStep ? 'bg-accent text-white' : 
+                    'bg-muted text-muted-foreground'
+                  }`}>
+                    {step < currentStep ? <Sparkles className="w-4 h-4" /> : step}
+                  </div>
+                  <div className="hidden lg:block">
+                    <p className={`text-sm font-medium ${step <= currentStep ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {getStepTitle(step)}
+                    </p>
+                  </div>
+                  {step < 5 && <div className="w-8 h-0.5 bg-border mx-2"></div>}
+                </div>
+              ))}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Step {currentStep} of {totalSteps}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-12 gap-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-3 gap-8">
             {/* Form Section */}
-            <div className="lg:col-span-4">
-              <Card className="card-elegant">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-accent" />
-                    {getStepTitle(currentStep)}
-                  </CardTitle>
-                  <CardDescription>
-                    {getStepDescription(currentStep)}
-                  </CardDescription>
+            <div className="lg:col-span-2">
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-xl">
+                <CardHeader className="pb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
+                      {getStepIcon(currentStep)}
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">{getStepTitle(currentStep)}</CardTitle>
+                      <CardDescription className="text-base">
+                        {getStepDescription(currentStep)}
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-8">
                   {renderStep()}
                   
                   {/* Navigation */}
-                  <div className="flex justify-between pt-6">
+                  <div className="flex justify-between pt-6 border-t border-border/50">
                     <Button
                       variant="outline"
                       onClick={handleBack}
                       disabled={currentStep === 1}
-                      className="btn-secondary"
+                      className="px-6"
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Back
@@ -188,7 +227,7 @@ const ResumeBuilderPage = () => {
                     {currentStep < totalSteps ? (
                       <Button 
                         onClick={handleNext} 
-                        className="btn-primary"
+                        className="bg-gradient-to-r from-primary to-accent text-white px-6 hover:scale-105 transition-transform"
                         disabled={!canProceed()}
                       >
                         Next
@@ -196,7 +235,7 @@ const ResumeBuilderPage = () => {
                       </Button>
                     ) : (
                       <Button 
-                        className="btn-hero"
+                        className="bg-gradient-to-r from-primary to-accent text-white px-8 hover:scale-105 transition-transform"
                         onClick={handleGenerate}
                         disabled={status.loading || !isReadyToGenerate()}
                       >
@@ -209,14 +248,15 @@ const ResumeBuilderPage = () => {
               </Card>
             </div>
 
-            {/* Preview Section */}
-            <div className="lg:col-span-4">
-              <Card className="card-elegant sticky top-24">
+            {/* Preview & Tools Section */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Preview */}
+              <Card className="bg-card/50 backdrop-blur-sm border-border/50 sticky top-24">
                 <CardHeader>
-                  <CardTitle className="text-lg">Preview</CardTitle>
-                  <CardDescription>
-                    Your resume will appear here
-                  </CardDescription>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Eye className="w-5 h-5 text-accent" />
+                    Live Preview
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {outputs?.resume ? (
@@ -250,7 +290,7 @@ const ResumeBuilderPage = () => {
                       </FeatureGuard>
                     </div>
                   ) : (
-                    <div className="bg-muted/30 rounded-lg p-6 min-h-[400px] flex items-center justify-center">
+                    <div className="bg-muted/30 rounded-lg p-6 min-h-[300px] flex items-center justify-center">
                       <div className="text-center space-y-4">
                         <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
                         <p className="text-sm text-muted-foreground">
@@ -261,21 +301,14 @@ const ResumeBuilderPage = () => {
                   )}
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Company Signal Panel */}
-            <div className="lg:col-span-2">
-              <CompanySignalPanel />
-            </div>
-
-            {/* Version History Section - Protected Feature */}
-            {user && (
-              <div className="lg:col-span-2">
+              {/* Version History Section - Protected Feature */}
+              {user && (
                 <FeatureGuard feature="version_history">
                   <VersionHistory />
                 </FeatureGuard>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </main>
@@ -382,34 +415,61 @@ const ResumeInputStep = ({ inputs, updateInputs }) => {
 
 const JobDescriptionStep = ({ inputs, updateInputs }) => {
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="job-description">Target Job Description</Label>
-        <Textarea
-          id="job-description"
-          placeholder="Paste the job description you're applying for. Our AI will tailor your resume to match the requirements..."
-          value={inputs.jobText}
-          onChange={(e) => updateInputs({ jobText: e.target.value })}
-          className="min-h-[300px]"
-        />
-        <p className="text-sm text-muted-foreground">
-          {inputs.jobText.length} characters (minimum 50 required)
-        </p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto">
+          <FileText className="h-8 w-8 text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Job Requirements</h2>
+          <p className="text-muted-foreground">Paste the job description to tailor your resume</p>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="company-signal">Company Signal (Optional)</Label>
-        <Textarea
-          id="company-signal"
-          placeholder="e.g., 'I'm excited about your company's commitment to sustainability...'"
-          value={inputs.companySignal || ''}
-          onChange={(e) => updateInputs({ companySignal: e.target.value })}
-          className="min-h-[100px]"
-          maxLength={100}
-        />
-        <p className="text-sm text-muted-foreground">
-          Personal hook for cover letters ({(inputs.companySignal || '').length}/100)
-        </p>
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <Label htmlFor="job-description" className="text-base font-medium">
+            Target Job Description
+          </Label>
+          <Textarea
+            id="job-description"
+            placeholder="Paste the complete job description here. Include:
+• Job title and responsibilities
+• Required skills and qualifications
+• Preferred experience
+• Company information
+• Benefits and culture details"
+            value={inputs.jobText}
+            onChange={(e) => updateInputs({ jobText: e.target.value })}
+            className="min-h-[200px] text-base"
+          />
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {inputs.jobText.length} characters (minimum 50 required)
+            </p>
+            <Badge variant={inputs.jobText.length >= 50 ? "default" : "outline"}>
+              {inputs.jobText.length >= 50 ? "✓ Ready" : "Needs more"}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Tips */}
+        <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Target className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-medium text-sm mb-1">Pro Tip</h4>
+                <p className="text-xs text-muted-foreground">
+                  Include the complete job description for best results. Our AI will extract key requirements and optimize your resume accordingly.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -457,7 +517,8 @@ const getStepTitle = (step: number) => {
     case 1: return "Configuration";
     case 2: return "Resume Input";
     case 3: return "Job Description";
-    case 4: return "Review & Generate";
+    case 4: return "Company Intelligence";
+    case 5: return "Review & Generate";
     default: return "Configuration";
   }
 };
@@ -467,8 +528,20 @@ const getStepDescription = (step: number) => {
     case 1: return "Choose how you want your resume formatted and styled";
     case 2: return "Enter your current resume content";
     case 3: return "Provide the job description to tailor your resume";
-    case 4: return "Review your settings and generate your optimized resume";
-    default: return "Configure your resume settings";
+    case 4: return "Add recent company news to personalize your application";
+    case 5: return "Review your settings and generate your optimized resume";
+    default: return "Configuration settings";
+  }
+};
+
+const getStepIcon = (step: number) => {
+  switch (step) {
+    case 1: return <Settings className="h-5 w-5 text-white" />;
+    case 2: return <PenTool className="h-5 w-5 text-white" />;
+    case 3: return <FileText className="h-5 w-5 text-white" />;
+    case 4: return <Building2 className="h-5 w-5 text-white" />;
+    case 5: return <Eye className="h-5 w-5 text-white" />;
+    default: return <Settings className="h-5 w-5 text-white" />;
   }
 };
 

@@ -40,6 +40,9 @@ const ModernLandingPage = () => {
           <div className="flex items-center space-x-3">
             <ThemeToggle />
             <Button asChild variant="outline" size="sm">
+              <Link to="/dashboard">Dashboard</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link to="/auth">Sign In</Link>
             </Button>
             <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">

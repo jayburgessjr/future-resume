@@ -13,6 +13,7 @@ import CoverLetterPage from "./pages/CoverLetterPage";
 import RecruiterHighlightsPage from "./pages/RecruiterHighlightsPage";
 import InterviewToolkitPage from "./pages/InterviewToolkitPage";
 import AuthPage from "./pages/AuthPage";
+import DashboardPage from "./pages/DashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,7 +31,8 @@ function AuthenticatedApp() {
   return (
     <Routes>
       <Route path="/" element={<ModernLandingPage />} />
-      <Route path="/auth" element={user ? <Navigate to="/builder" replace /> : <AuthPage />} />
+      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/dashboard" element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} />
       <Route path="/builder" element={<ResumeBuilderPage />} />
       <Route path="/cover-letter" element={<CoverLetterPage />} />
       <Route path="/recruiter-highlights" element={<RecruiterHighlightsPage />} />

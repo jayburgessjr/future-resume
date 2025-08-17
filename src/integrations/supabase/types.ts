@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      jobs: {
+        Row: {
+          archived: boolean | null
+          company: string
+          company_signal: string | null
+          created_at: string
+          description: string
+          id: string
+          profile_id: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean | null
+          company: string
+          company_signal?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          profile_id: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean | null
+          company?: string
+          company_signal?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          profile_id?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_jobs_profile_id"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -89,6 +136,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_master: boolean | null
           profile_id: string
           title: string
           updated_at: string
@@ -96,6 +144,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_master?: boolean | null
           profile_id: string
           title?: string
           updated_at?: string
@@ -103,6 +152,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_master?: boolean | null
           profile_id?: string
           title?: string
           updated_at?: string

@@ -58,26 +58,60 @@ serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log("[STRIPE-WEBHOOK] Checkout completed:", session.id);
 
+        // Extract email from hosted checkout (Payment Links/Buy Buttons)
+        const email = session.customer_details?.email || session.customer_email;
+        const customerId = typeof session.customer === "string" ? session.customer : undefined;
+        
+        console.log("[STRIPE-WEBHOOK] Customer info:", { email, customerId });
+
         if (session.mode === "subscription" && session.subscription) {
           // Get the subscription details
           const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
-          const customerId = session.customer as string;
 
-          // Update user's profile with subscription info
-          const { error } = await supabaseService
-            .from("profiles")
-            .update({
-              stripe_customer_id: customerId,
-              plan: "pro",
-              sub_status: subscription.status,
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            })
-            .eq("stripe_customer_id", customerId);
+          if (customerId) {
+            // Try to update by existing stripe_customer_id first
+            const { data: existingProfile, error: fetchError } = await supabaseService
+              .from("profiles")
+              .select("id")
+              .eq("stripe_customer_id", customerId)
+              .maybeSingle();
 
-          if (error) {
-            console.error("[STRIPE-WEBHOOK] Failed to update profile:", error);
-          } else {
-            console.log("[STRIPE-WEBHOOK] Profile updated for customer:", customerId);
+            if (!fetchError && existingProfile) {
+              const { error } = await supabaseService
+                .from("profiles")
+                .update({
+                  plan: "pro",
+                  sub_status: subscription.status,
+                  current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                })
+                .eq("stripe_customer_id", customerId);
+
+              if (error) {
+                console.error("[STRIPE-WEBHOOK] Failed to update profile by customer ID:", error);
+              } else {
+                console.log("[STRIPE-WEBHOOK] Profile updated by customer ID:", customerId);
+              }
+              break;
+            }
+          }
+
+          // Fallback: update by email and set stripe_customer_id
+          if (email) {
+            const { error } = await supabaseService
+              .from("profiles")
+              .update({
+                stripe_customer_id: customerId,
+                plan: "pro",
+                sub_status: subscription.status,
+                current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              })
+              .eq("email", email);
+
+            if (error) {
+              console.error("[STRIPE-WEBHOOK] Failed to update profile by email:", error);
+            } else {
+              console.log("[STRIPE-WEBHOOK] Profile updated by email:", email);
+            }
           }
         }
         break;
@@ -87,19 +121,46 @@ serve(async (req) => {
         const subscription = event.data.object as Stripe.Subscription;
         console.log("[STRIPE-WEBHOOK] Subscription updated:", subscription.id);
 
-        const { error } = await supabaseService
+        const customerId = subscription.customer as string;
+
+        // Try to update by stripe_customer_id first
+        const { error: customerError } = await supabaseService
           .from("profiles")
           .update({
             sub_status: subscription.status,
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
             plan: subscription.status === "active" ? "pro" : "free",
           })
-          .eq("stripe_customer_id", subscription.customer as string);
+          .eq("stripe_customer_id", customerId);
 
-        if (error) {
-          console.error("[STRIPE-WEBHOOK] Failed to update subscription:", error);
+        if (customerError) {
+          console.error("[STRIPE-WEBHOOK] Failed to update subscription by customer ID:", customerError);
+          
+          // Fallback: get customer email and update by email
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            if (customer && !customer.deleted && customer.email) {
+              const { error: emailError } = await supabaseService
+                .from("profiles")
+                .update({
+                  stripe_customer_id: customerId,
+                  sub_status: subscription.status,
+                  current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                  plan: subscription.status === "active" ? "pro" : "free",
+                })
+                .eq("email", customer.email);
+
+              if (emailError) {
+                console.error("[STRIPE-WEBHOOK] Failed to update subscription by email:", emailError);
+              } else {
+                console.log("[STRIPE-WEBHOOK] Subscription updated by email:", customer.email);
+              }
+            }
+          } catch (stripeError) {
+            console.error("[STRIPE-WEBHOOK] Failed to retrieve customer:", stripeError);
+          }
         } else {
-          console.log("[STRIPE-WEBHOOK] Subscription updated for customer:", subscription.customer);
+          console.log("[STRIPE-WEBHOOK] Subscription updated for customer:", customerId);
         }
         break;
       }
@@ -108,19 +169,45 @@ serve(async (req) => {
         const subscription = event.data.object as Stripe.Subscription;
         console.log("[STRIPE-WEBHOOK] Subscription deleted:", subscription.id);
 
-        const { error } = await supabaseService
+        const customerId = subscription.customer as string;
+
+        // Try to update by stripe_customer_id first
+        const { error: customerError } = await supabaseService
           .from("profiles")
           .update({
             plan: "free",
             sub_status: "canceled",
             current_period_end: null,
           })
-          .eq("stripe_customer_id", subscription.customer as string);
+          .eq("stripe_customer_id", customerId);
 
-        if (error) {
-          console.error("[STRIPE-WEBHOOK] Failed to cancel subscription:", error);
+        if (customerError) {
+          console.error("[STRIPE-WEBHOOK] Failed to cancel subscription by customer ID:", customerError);
+          
+          // Fallback: get customer email and update by email
+          try {
+            const customer = await stripe.customers.retrieve(customerId);
+            if (customer && !customer.deleted && customer.email) {
+              const { error: emailError } = await supabaseService
+                .from("profiles")
+                .update({
+                  plan: "free",
+                  sub_status: "canceled",
+                  current_period_end: null,
+                })
+                .eq("email", customer.email);
+
+              if (emailError) {
+                console.error("[STRIPE-WEBHOOK] Failed to cancel subscription by email:", emailError);
+              } else {
+                console.log("[STRIPE-WEBHOOK] Subscription canceled by email:", customer.email);
+              }
+            }
+          } catch (stripeError) {
+            console.error("[STRIPE-WEBHOOK] Failed to retrieve customer:", stripeError);
+          }
         } else {
-          console.log("[STRIPE-WEBHOOK] Subscription canceled for customer:", subscription.customer);
+          console.log("[STRIPE-WEBHOOK] Subscription canceled for customer:", customerId);
         }
         break;
       }

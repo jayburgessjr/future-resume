@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { nextAfterPricing } from "@/lib/flowRouter";
 import { supabase } from "@/integrations/supabase/client";
 import { isPro, getPlanInfo } from "@/lib/entitlements";
+import StripeBuyButton from "@/components/pricing/StripeBuyButton";
 import { 
   ArrowLeft, 
   Check, 
@@ -16,7 +17,8 @@ import {
   Users,
   Download,
   History,
-  Crown
+  Crown,
+  ExternalLink
 } from "lucide-react";
 
 const PricingPage = () => {
@@ -81,21 +83,8 @@ const PricingPage = () => {
         });
         navigate(nextAfterPricing({ plan }));
       } else {
-        // Redirect to Stripe checkout for Pro plan
-        const { data, error } = await supabase.functions.invoke('create-checkout', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-
-        if (error) throw error;
-
-        if (data?.url) {
-          // Redirect to Stripe Checkout
-          window.location.href = data.url;
-        } else {
-          throw new Error('No checkout URL received');
-        }
+        // Redirect to Stripe Payment Link (hosted checkout)
+        window.open('https://buy.stripe.com/aFa5kDc8egsW0wwb3Qcs800', '_self');
       }
     } catch (error) {
       console.error('Error selecting plan:', error);
@@ -109,36 +98,9 @@ const PricingPage = () => {
     }
   };
 
-  const handleManageBilling = async () => {
-    if (!session) return;
-    
-    setLoading('billing');
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        // Redirect to Stripe Customer Portal
-        window.location.href = data.url;
-      } else {
-        throw new Error('No portal URL received');
-      }
-    } catch (error) {
-      console.error('Error opening billing portal:', error);
-      toast({
-        title: "Unable to open billing portal",
-        description: "Please try again or contact support.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading("");
-    }
+  const handleManageBilling = () => {
+    // Redirect to Stripe Customer Portal (hosted)
+    window.open('https://billing.stripe.com/p/login/aFa5kDc8egsW0wwb3Qcs800', '_blank');
   };
 
   const userIsPro = isPro(profile);
@@ -292,10 +254,10 @@ const PricingPage = () => {
               {userIsPro ? (
                 <Button 
                   onClick={handleManageBilling}
-                  disabled={loading === 'billing'}
                   className="w-full bg-primary hover:bg-primary/90"
                 >
-                  {loading === 'billing' ? "Opening Portal..." : "Manage Billing"}
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Manage Billing
                 </Button>
               ) : (
                 <Button 
@@ -303,16 +265,32 @@ const PricingPage = () => {
                   disabled={loading === 'pro'}
                   className="w-full bg-primary hover:bg-primary/90"
                 >
-                  {loading === 'pro' ? "Redirecting..." : "Upgrade to Pro"}
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  {loading === 'pro' ? "Redirecting..." : "Go Pro (Secure Stripe Checkout)"}
                 </Button>
               )}
             </CardContent>
           </Card>
         </div>
 
+        {/* Embedded Stripe Buy Button */}
+        {!userIsPro && (
+          <div className="mt-12 max-w-md mx-auto">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Or purchase directly:
+              </h3>
+            </div>
+            <StripeBuyButton />
+          </div>
+        )}
+
         <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-2">
             You can upgrade or downgrade your plan at any time
+          </p>
+          <p className="text-xs text-muted-foreground">
+            🔒 Checkout is fully hosted by Stripe. No card data touches our servers.
           </p>
         </div>
       </div>

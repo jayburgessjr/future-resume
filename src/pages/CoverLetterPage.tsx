@@ -1,5 +1,6 @@
 import { CoverLetterForm } from '@/components/cover-letter/CoverLetterForm';
 import { CoverLetterPreview } from '@/components/cover-letter/CoverLetterPreview';
+import { ExportBar } from '@/components/export/ExportBar';
 import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
@@ -11,6 +12,7 @@ export default function CoverLetterPage() {
     outputs, 
     status, 
     inputs,
+    settings,
     updateInputs, 
     runGeneration,
     getWordCount,
@@ -97,6 +99,20 @@ export default function CoverLetterPage() {
               wordCount={wordCount}
               isOverLimit={isOverWordLimit}
             />
+            
+            {/* Export Bar */}
+            {coverLetter && (
+              <ExportBar 
+                content={coverLetter}
+                title="Cover Letter"
+                metadata={{
+                  generatedAt: status.lastGenerated,
+                  settings,
+                  wordCount
+                }}
+                showWordCount={false}
+              />
+            )}
           </div>
         </div>
 

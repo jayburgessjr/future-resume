@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppDataStore } from "@/stores/appData";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
+import { ExportBar } from "@/components/export/ExportBar";
 import { useToast } from "@/hooks/use-toast";
 
 const ResumeBuilderPage = () => {
@@ -212,18 +213,32 @@ const ResumeBuilderPage = () => {
                 </CardHeader>
                 <CardContent>
                   {outputs?.resume ? (
-                    <div className="bg-muted/30 rounded-lg p-4 max-h-[400px] overflow-y-auto">
-                      <div className="prose prose-sm max-w-none">
-                        <pre className="whitespace-pre-wrap text-xs leading-relaxed font-sans">
-                          {outputs.resume.slice(0, 500)}...
-                        </pre>
+                    <div className="space-y-4">
+                      <div className="bg-muted/30 rounded-lg p-4 max-h-[300px] overflow-y-auto">
+                        <div className="prose prose-sm max-w-none">
+                          <pre className="whitespace-pre-wrap text-xs leading-relaxed font-sans">
+                            {outputs.resume.slice(0, 500)}...
+                          </pre>
+                        </div>
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Words: {getWordCount(outputs.resume)}/550
+                          {isOverLimit(outputs.resume, 550) && (
+                            <span className="text-destructive ml-2">Over limit!</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="mt-3 text-xs text-muted-foreground">
-                        Words: {getWordCount(outputs.resume)}/550
-                        {isOverLimit(outputs.resume, 550) && (
-                          <span className="text-destructive ml-2">Over limit!</span>
-                        )}
-                      </div>
+                      
+                      {/* Export Bar */}
+                      <ExportBar 
+                        content={outputs.resume}
+                        title="Resume"
+                        metadata={{
+                          generatedAt: status.lastGenerated,
+                          settings,
+                          wordCount: getWordCount(outputs.resume)
+                        }}
+                        className="text-xs"
+                      />
                     </div>
                   ) : (
                     <div className="bg-muted/30 rounded-lg p-6 min-h-[400px] flex items-center justify-center">

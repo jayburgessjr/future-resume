@@ -1,4 +1,5 @@
 import { ToolkitAccordion } from '@/components/interview/ToolkitAccordion';
+import { ExportBar } from '@/components/export/ExportBar';
 import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Brain, RefreshCw, Copy, Download, Briefcase } from 'lucide-react';
@@ -273,7 +274,36 @@ export default function InterviewToolkitPage() {
             </div>
           </Card>
         ) : (
-          <ToolkitAccordion data={toolkitData} />
+          <div className="space-y-6">
+            <ToolkitAccordion data={toolkitData} />
+            
+            {/* Export Bar */}
+            {hasContent && (
+              <ExportBar 
+                content={[
+                  'INTERVIEW & NETWORKING TOOLKIT',
+                  '',
+                  'INTERVIEW QUESTIONS:',
+                  ...(toolkitData.interviewerQuestions || []),
+                  '',
+                  'FOLLOW-UP EMAIL:',
+                  toolkitData.followUpEmail || '',
+                  '',
+                  'SKILL GAPS:',
+                  ...(toolkitData.skillGaps || []),
+                  '',
+                  'KPI TRACKER:',
+                  toolkitData.kpiDashboard || '',
+                ].join('\n')}
+                title="Interview Toolkit"
+                metadata={{
+                  generatedAt: status.lastGenerated,
+                  settings,
+                }}
+                showWordCount={false}
+              />
+            )}
+          </div>
         )}
 
         {/* Footer */}

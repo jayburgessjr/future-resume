@@ -1,4 +1,5 @@
 import { HighlightsCard } from '@/components/recruiter/HighlightsCard';
+import { ExportBar } from '@/components/export/ExportBar';
 import { useAppDataStore } from '@/stores/appData';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Target } from 'lucide-react';
@@ -105,7 +106,7 @@ export default function RecruiterHighlightsPage() {
           </div>
 
           {/* Highlights */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <HighlightsCard
               highlights={highlights}
               isGenerating={status.loading}
@@ -115,6 +116,19 @@ export default function RecruiterHighlightsPage() {
                 voice: useAppDataStore.getState().settings.voice,
               }}
             />
+            
+            {/* Export Bar */}
+            {highlights.length > 0 && (
+              <ExportBar 
+                content={highlights.map((h, i) => `${i + 1}. ${h}`).join('\n\n')}
+                title="Recruiter Highlights"
+                metadata={{
+                  generatedAt: status.lastGenerated,
+                  settings: useAppDataStore.getState().settings,
+                }}
+                showWordCount={false}
+              />
+            )}
           </div>
         </div>
 

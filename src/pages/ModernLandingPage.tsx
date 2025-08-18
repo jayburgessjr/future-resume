@@ -36,7 +36,7 @@ const ModernLandingPage = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">
-                Resume Builder Pro
+                Best Darn Resume
               </h1>
               <p className="text-xs text-muted-foreground">AI-Powered Career Success</p>
             </div>

@@ -22,7 +22,7 @@ interface AppInputs {
 }
 
 interface AppOutputs {
-  resume: string;
+  resume: string | null;
   coverLetter: string;
   highlights: string[];
   toolkit: {
@@ -45,12 +45,24 @@ interface AppStatus {
   lastGenerated?: Date;
 }
 
+interface AppFlags {
+  hasRunResume: boolean;
+  hasRunCoverLetter: boolean;
+  hasRunHighlights: boolean;
+  hasRunInterview: boolean;
+}
+
 interface AppDataStore {
   settings: AppSettings;
   inputs: AppInputs;
   outputs: AppOutputs | null;
   status: AppStatus;
-  
+  flags: AppFlags;
+
+  // hydration and generation
+  hydrateFromDashboard: (payload: { resumeText: string; jobText: string; companySignal?: string }) => void;
+  generateResume: () => Promise<void>;
+
   // Actions
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   updateInputs: (newInputs: Partial<AppInputs>) => void;
@@ -86,6 +98,13 @@ const defaultStatus: AppStatus = {
   loading: false,
 };
 
+const defaultFlags: AppFlags = {
+  hasRunResume: false,
+  hasRunCoverLetter: false,
+  hasRunHighlights: false,
+  hasRunInterview: false,
+};
+
 export const useAppDataStore = create<AppDataStore>()(
   persist(
     (set, get) => ({
@@ -93,6 +112,49 @@ export const useAppDataStore = create<AppDataStore>()(
       inputs: defaultInputs,
       outputs: null,
       status: defaultStatus,
+      flags: defaultFlags,
+
+      hydrateFromDashboard: ({ resumeText, jobText, companySignal }) =>
+        set((state) => ({
+          inputs: { ...state.inputs, resumeText, jobText, companySignal },
+          outputs: state.outputs ? { ...state.outputs, resume: null } : null,
+          flags: { ...state.flags, hasRunResume: false },
+        })),
+
+      generateResume: async () => {
+        const { inputs, settings } = get();
+        if (!inputs.resumeText || !inputs.jobText) return;
+        set((current) => ({
+          status: { ...current.status, loading: true },
+        }));
+        try {
+          const params: ResumeGenerationParams = {
+            ...settings,
+            resumeContent: inputs.resumeText,
+            jobDescription: inputs.jobText,
+            manualEntry: inputs.companySignal,
+          };
+          const result: ResumeGenerationResult = await generateResumeFlow(params);
+          const resumeText = result.finalResume ?? result.resume ?? '';
+          set((s) => ({
+            outputs: s.outputs
+              ? { ...s.outputs, resume: resumeText }
+              : {
+                  resume: resumeText,
+                  coverLetter: '',
+                  highlights: [],
+                  toolkit: { questions: [], followUpEmail: '', skillGaps: [] },
+                  weeklyKPITracker: '',
+                  metadata: result.metadata,
+                },
+            flags: { ...s.flags, hasRunResume: !!resumeText },
+            status: { ...s.status, loading: false },
+          }));
+        } catch (e) {
+          set((s) => ({ status: { ...s.status, loading: false } }));
+          throw e;
+        }
+      },
 
       updateSettings: (newSettings) =>
         set((state) => ({
@@ -298,6 +360,7 @@ export const useAppDataStore = create<AppDataStore>()(
         inputs: state.inputs,
         outputs: state.outputs,
         status: { hasRun: state.status.hasRun, loading: false }, // Don't persist loading state
+        flags: state.flags,
       }),
     }
   )

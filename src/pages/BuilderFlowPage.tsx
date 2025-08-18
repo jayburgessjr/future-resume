@@ -31,7 +31,17 @@ const BuilderFlowPage = () => {
     currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume'
   );
 
-  const { settings, inputs, outputs, status, loadToolkitIntoBuilder, getFirstIncompleteStep } = useAppDataStore();
+  const {
+    settings,
+    inputs,
+    outputs,
+    flags,
+    status,
+    loadToolkitIntoBuilder,
+    getFirstIncompleteStep,
+    generateResume,
+    getWordCount,
+  } = useAppDataStore();
 
   useEffect(() => {
     // Handle toolkit loading from URL params
@@ -70,6 +80,20 @@ const BuilderFlowPage = () => {
     }
   }, [currentStep, setSearchParams, searchParams]);
 
+  useEffect(() => {
+    const autostart = searchParams.get('autostart');
+    if (
+      autostart === '1' &&
+      !outputs?.resume &&
+      inputs.resumeText &&
+      inputs.jobText
+    ) {
+      (async () => {
+        await generateResume();
+      })();
+    }
+  }, [searchParams, outputs?.resume, inputs.resumeText, inputs.jobText, generateResume]);
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -79,8 +103,16 @@ const BuilderFlowPage = () => {
   
   const canProceed = () => {
     switch (currentStep) {
-      case 'resume':
-        return !!outputs?.resume && !status.loading;
+      case 'resume': {
+        const resumeText = outputs?.resume?.trim() ?? '';
+        const words = resumeText ? getWordCount(resumeText) : 0;
+        return (
+          flags.hasRunResume &&
+          resumeText.length > 0 &&
+          words <= 550 &&
+          !status.loading
+        );
+      }
       case 'cover-letter':
         return !!outputs?.coverLetter && !status.loading;
       case 'highlights':

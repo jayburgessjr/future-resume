@@ -62,7 +62,7 @@ const DashboardPage = () => {
     getSkillGaps
   } = useDashboardStore();
 
-  const { updateInputs } = useAppDataStore();
+  const { hydrateFromDashboard } = useAppDataStore();
 
   // UI State
   const [showJobDialog, setShowJobDialog] = useState(false);
@@ -204,11 +204,10 @@ const DashboardPage = () => {
   };
 
   const handleSendToBuilder = (job: Job) => {
-    // Update the app data store with the job information
-    updateInputs({
+    hydrateFromDashboard({
+      resumeText: (masterResume as any)?.content || '',
       jobText: job.description,
-      companySignal: job.company_signal,
-      companyName: job.company
+      companySignal: job.company_signal
     });
 
     toast({
@@ -216,7 +215,7 @@ const DashboardPage = () => {
       description: `${job.title} details loaded into resume builder.`,
     });
 
-    navigate('/builder');
+    navigate('/builder?step=resume&autostart=1');
   };
 
   const handleDeleteJob = (job: Job) => {

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -12,16 +11,16 @@ import { ExportBar } from "@/components/dashboard/ExportBar";
 import { useToast } from "@/hooks/use-toast";
 
 export const StepResume = () => {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const { 
-    settings, 
-    inputs, 
-    outputs, 
-    updateSettings, 
-    updateInputs, 
-    runGeneration,
+  const {
+    settings,
+    inputs,
+    outputs,
+    updateSettings,
+    updateInputs,
+    generateResume,
     getWordCount,
-    isOverLimit 
+    isOverLimit,
+    status
   } = useAppDataStore();
   const { toast } = useToast();
 
@@ -35,9 +34,8 @@ export const StepResume = () => {
       return;
     }
 
-    setIsGenerating(true);
     try {
-      await runGeneration();
+      await generateResume();
       toast({
         title: "Resume Generated!",
         description: "Your targeted resume has been created.",
@@ -48,8 +46,6 @@ export const StepResume = () => {
         description: "Please check your inputs and try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -151,11 +147,11 @@ export const StepResume = () => {
         {/* Generate Button */}
         <Button
           onClick={handleGenerate}
-          disabled={isGenerating || !inputs.resumeText.trim() || !inputs.jobText.trim()}
+          disabled={status.loading || !inputs.resumeText.trim() || !inputs.jobText.trim()}
           className="w-full bg-gradient-to-r from-primary to-accent text-white hover:scale-105 transition-transform"
           size="lg"
         >
-          {isGenerating ? "Generating..." : "Generate Resume"}
+          {status.loading ? "Generating..." : "Generate Resume"}
           <Sparkles className="ml-2 h-5 w-5" />
         </Button>
       </div>
@@ -175,6 +171,12 @@ export const StepResume = () => {
             </div>
           )}
         </div>
+        {outputs?.resume && isOverWordLimit && (
+          <p className="text-sm text-destructive">
+            Your résumé exceeds the 550-word limit. Please trim it before
+            continuing.
+          </p>
+        )}
 
         <Card className="bg-muted/30">
           <CardContent className="p-6">

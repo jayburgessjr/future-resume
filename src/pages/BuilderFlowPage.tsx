@@ -11,15 +11,13 @@ import { preserveQuery, ensureAutostart } from "@/lib/route";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { Badge } from "@/components/ui/badge";
-import { Stepper } from "@/components/flow/Stepper";
+import { Stepper, type FlowStep } from "@/components/flow/Stepper";
 import { StepResume } from "@/components/flow/StepResume";
 import { StepCoverLetter } from "@/components/flow/StepCoverLetter";
 import { StepHighlights } from "@/components/flow/StepHighlights";
 import { StepInterview } from "@/components/flow/StepInterview";
 import { FlowFooter } from "@/components/flow/FlowFooter";
 import { ReviewBar } from "@/components/flow/ReviewBar";
-
-type FlowStep = 'resume' | 'cover-letter' | 'highlights' | 'interview';
 
 const steps: FlowStep[] = ['resume', 'cover-letter', 'highlights', 'interview'];
 

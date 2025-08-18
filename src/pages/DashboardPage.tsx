@@ -205,9 +205,9 @@ const DashboardPage = () => {
 
   const handleSendToBuilder = (job: Job) => {
     hydrateFromDashboard({
-      resumeText: (masterResume as any)?.content || '',
-      jobText: job.description,
-      companySignal: job.company_signal
+      resumeText: (masterResume as any)?.content ?? '',
+      jobText: job.description ?? '',
+      companySignal: job.company_signal ?? ''
     });
 
     toast({

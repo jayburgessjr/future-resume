@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useAppDataStore } from "@/stores/appData";
+import { useAppData } from "@/stores/appData";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ const BuilderFlowPage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const runOnce = useRef(false);
+  const ran = useRef(false);
   
   const currentStepParam = searchParams.get('step') as FlowStep;
   const [currentStep, setCurrentStep] = useState<FlowStep>(
@@ -35,17 +35,15 @@ const BuilderFlowPage = () => {
 
   const {
     settings,
-    inputs,
     outputs,
-    status,
+    loading,
     loadToolkitIntoBuilder,
     getFirstIncompleteStep,
-    getWordCount,
-  } = useAppDataStore();
+  } = useAppData();
 
   useEffect(() => {
-    if (runOnce.current) return;
-    runOnce.current = true;
+    if (ran.current) return;
+    ran.current = true;
 
     const p = new URLSearchParams(window.location.search);
     if (!p.get('step')) p.set('step', 'resume');
@@ -55,16 +53,15 @@ const BuilderFlowPage = () => {
       window.history.replaceState({}, '', target);
     }
 
-    const state = useAppDataStore.getState();
+    const state = useAppData.getState();
     const { resumeText, jobText } = state.inputs;
     const hasOutput = !!state.outputs?.resume?.trim();
-    const shouldGenerate =
+    if (
       p.get('autostart') === '1' &&
       resumeText?.trim() &&
       jobText?.trim() &&
-      !hasOutput;
-
-    if (shouldGenerate) {
+      !hasOutput
+    ) {
       state.generateResume();
     }
   }, []);
@@ -117,19 +114,15 @@ const BuilderFlowPage = () => {
     switch (currentStep) {
       case 'resume': {
         const resumeText = outputs?.resume?.trim() ?? '';
-        const words = resumeText ? getWordCount(resumeText) : 0;
-        return (
-          resumeText.length > 0 &&
-          words <= 550 &&
-          !status.loading
-        );
+        const words = (resumeText.match(/\S+/g) || []).length;
+        return resumeText.length > 0 && words <= 550 && !loading;
       }
       case 'cover-letter':
-        return !!outputs?.coverLetter && !status.loading;
+        return !!outputs?.coverLetter && !loading;
       case 'highlights':
-        return !!outputs?.highlights?.length && !status.loading;
+        return !!outputs?.highlights?.length && !loading;
       case 'interview':
-        return !!outputs?.toolkit && !status.loading;
+        return !!outputs?.toolkit && !loading;
       default:
         return false;
     }
@@ -233,7 +226,7 @@ const BuilderFlowPage = () => {
         canProceed={canProceed()}
         onNext={handleNext}
         onBack={handleBack}
-        isLoading={status.loading}
+        isLoading={loading}
       />
     </div>
   );

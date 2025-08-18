@@ -12,11 +12,13 @@ const extractResume = (res: any): string => {
   if (!res) return '';
   if (typeof res === 'string') return stripComments(res);
   const candidates = [
-    (res as any).resume,
+    res.resume,
+    res.final_resume,
+    res.result,
+    res.content,
     res.output?.resume,
     res.outputs?.resume,
     res.data?.resume,
-    res.finalResume,
   ].filter(Boolean);
   return stripComments(String(candidates[0] || ''));
 };
@@ -74,6 +76,7 @@ interface AppDataStore {
   outputs: AppOutputs | null;
   status: AppStatus;
   flags: AppFlags;
+  loading: boolean;
 
   // hydration and generation
   hydrateFromDashboard: (payload: { resumeText: string; jobText: string; companySignal?: string }) => void;
@@ -129,25 +132,24 @@ export const useAppDataStore = create<AppDataStore>()(
       outputs: null,
       status: defaultStatus,
       flags: defaultFlags,
+      loading: false,
 
       hydrateFromDashboard: ({ resumeText, jobText, companySignal }) =>
-        set((state) => ({
+        set((s) => ({
           inputs: {
-            ...state.inputs,
+            ...s.inputs,
             resumeText: resumeText ?? '',
             jobText: jobText ?? '',
-            companySignal: companySignal ?? '',
+            companySignal: companySignal ?? s.inputs.companySignal,
           },
-          outputs: null,
-          flags: { ...state.flags, hasRunResume: false },
+          outputs: { ...(s.outputs || {}), resume: '' },
+          flags: { ...s.flags, hasRunResume: false },
         })),
 
       generateResume: async () => {
         const { inputs, settings } = get();
         if (!inputs.resumeText?.trim() || !inputs.jobText?.trim()) return;
-        set((current) => ({
-          status: { ...current.status, loading: true },
-        }));
+        set((s) => ({ loading: true, status: { ...s.status, loading: true } }));
         try {
           const params: ResumeGenerationParams = {
             ...settings,
@@ -156,24 +158,15 @@ export const useAppDataStore = create<AppDataStore>()(
             manualEntry: inputs.companySignal,
           };
           const raw: ResumeGenerationResult = await generateResumeFlow(params);
-          const resumeText = extractResume(raw);
+          const txt = extractResume(raw);
           set((s) => ({
-            outputs: s.outputs
-              ? { ...s.outputs, resume: resumeText, metadata: raw.metadata }
-              : {
-                  resume: resumeText,
-                  coverLetter: '',
-                  highlights: [],
-                  toolkit: { questions: [], followUpEmail: '', skillGaps: [] },
-                  weeklyKPITracker: '',
-                  metadata: raw.metadata,
-                },
-            flags: { ...s.flags, hasRunResume: resumeText.length > 0 },
+            outputs: { ...(s.outputs || {}), resume: txt, metadata: raw.metadata },
+            flags: { ...s.flags, hasRunResume: txt.length > 0 },
+            loading: false,
             status: { ...s.status, loading: false },
           }));
         } catch (e) {
-          set((s) => ({ status: { ...s.status, loading: false } }));
-          throw e;
+          set((s) => ({ loading: false, status: { ...s.status, loading: false } }));
         }
       },
 
@@ -199,12 +192,13 @@ export const useAppDataStore = create<AppDataStore>()(
 
       runGeneration: async () => {
         const state = get();
-        
+
         if (!state.isReadyToGenerate()) {
           throw new Error('Missing required inputs');
         }
 
         set((currentState) => ({
+          loading: true,
           status: { ...currentState.status, loading: true },
         }));
 
@@ -238,6 +232,7 @@ export const useAppDataStore = create<AppDataStore>()(
 
           set((currentState) => ({
             outputs,
+            loading: false,
             status: {
               hasRun: true,
               loading: false,
@@ -259,6 +254,7 @@ export const useAppDataStore = create<AppDataStore>()(
 
         } catch (error) {
           set((currentState) => ({
+            loading: false,
             status: { ...currentState.status, loading: false },
           }));
           throw error;
@@ -386,3 +382,5 @@ export const useAppDataStore = create<AppDataStore>()(
     }
   )
 );
+
+export const useAppData = useAppDataStore;

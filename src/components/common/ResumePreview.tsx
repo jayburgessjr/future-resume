@@ -1,57 +1,37 @@
+"use client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText } from "lucide-react";
+import { useAppData } from "@/stores/appData";
 
-interface ResumePreviewProps {
-  resume: string;
-  inputs: { resumeText: string; jobText: string };
-  loading: boolean;
-}
+const SkeletonLines = ({ lines }: { lines: number }) => (
+  <div className="space-y-2">
+    {Array.from({ length: lines }).map((_, i) => (
+      <Skeleton key={i} className="h-4 w-full" />
+    ))}
+  </div>
+);
 
-export const ResumePreview = ({ resume, inputs, loading }: ResumePreviewProps) => {
-  if (loading) {
-    return (
-      <div className="space-y-3 min-h-[400px]">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-4 w-2/3" />
-      </div>
-    );
-  }
+export const ResumePreview = () => {
+  const { inputs, outputs, loading } = useAppData((s) => ({
+    inputs: s.inputs,
+    outputs: s.outputs || {},
+    loading: s.loading,
+  }));
 
-  if (resume?.trim()) {
+  if (loading) return <SkeletonLines lines={6} />;
+
+  const txt = outputs.resume?.trim() || '';
+  if (txt) {
     return (
       <div className="space-y-4">
         <div className="bg-background rounded-lg p-4 max-h-[400px] overflow-y-auto">
-          <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
-            {resume}
-          </pre>
+          <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">{txt}</pre>
         </div>
       </div>
     );
   }
 
   if (inputs.resumeText && inputs.jobText) {
-    return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
-          <p className="text-muted-foreground">
-            Ready to generate. Click Generate to see preview.
-          </p>
-        </div>
-      </div>
-    );
+    return <div className="text-sm text-slate-500">Resume ready to generate — click <b>Generate</b>.</div>;
   }
-
-  return (
-    <div className="min-h-[400px] flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
-        <p className="text-muted-foreground">
-          Add your resume & job description to begin.
-        </p>
-      </div>
-    </div>
-  );
+  return <div className="text-sm text-slate-500">Add your résumé & job to see a preview.</div>;
 };

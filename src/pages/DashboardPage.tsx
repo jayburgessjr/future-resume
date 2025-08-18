@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,7 @@ import {
   type Job, 
   type Resume 
 } from "@/stores/dashboardStore";
-import { useAppDataStore } from "@/stores/appData";
+import { useAppDataStore, useAppData } from "@/stores/appData";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -393,7 +394,22 @@ const DashboardPage = () => {
                     handleCompareJob(jobs[0]);
                   }
                 }}
-                onGenerateTargeted={() => navigate('/builder')}
+                onGenerateTargeted={() => {
+                  const selectedJD = jobs[0];
+                  useAppData.getState().hydrateFromDashboard({
+                    resumeText: (masterResume ?? '').toString(),
+                    jobText:
+                      selectedJD?.description ??
+                      selectedJD?.jobDescription ??
+                      selectedJD?.text ??
+                      '',
+                    companySignal:
+                      selectedJD?.company_signal ??
+                      (selectedJD as any)?.companySignal ??
+                      ''
+                  });
+                  navigate('/builder?step=resume&autostart=1');
+                }}
                 hasJobs={jobs.length > 0}
                 hasMasterResume={!!masterResume}
               />

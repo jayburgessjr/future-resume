@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -6,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Sparkles, AlertCircle } from "lucide-react";
-import { useAppDataStore } from "@/stores/appData";
+import { useAppData } from "@/stores/appData";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { useToast } from "@/hooks/use-toast";
 import { ResumePreview } from "@/components/common/ResumePreview";
@@ -19,13 +20,12 @@ export const StepResume = () => {
     updateSettings,
     updateInputs,
     generateResume,
-    getWordCount,
-    status
-  } = useAppDataStore();
+    loading
+  } = useAppData();
   const { toast } = useToast();
 
   const resume = outputs?.resume ?? "";
-  const words = resume.trim() ? getWordCount(resume) : 0;
+  const words = (resume.trim().match(/\S+/g) || []).length;
   const canContinue = words > 0 && words <= 550;
 
   const handleGenerate = async () => {
@@ -150,11 +150,11 @@ export const StepResume = () => {
           onClick={async () => {
             await handleGenerate();
           }}
-          disabled={status.loading || !inputs.resumeText.trim() || !inputs.jobText.trim()}
+          disabled={loading || !inputs.resumeText.trim() || !inputs.jobText.trim()}
           className="w-full bg-gradient-to-r from-primary to-accent text-white hover:scale-105 transition-transform"
           size="lg"
         >
-          {status.loading ? "Generating..." : "Generate Resume"}
+          {loading ? "Generating…" : "Generate Resume"}
           <Sparkles className="ml-2 h-5 w-5" />
         </Button>
       </div>
@@ -175,24 +175,14 @@ export const StepResume = () => {
           )}
         </div>
         {!canContinue && words > 550 && (
-          <p className="text-orange-600 text-sm mt-2">Over 550 words — trim to continue.</p>
+          <p className="text-sm mt-2" style={{color:'#FF851B'}}>Over 550 words — trim to continue.</p>
         )}
 
         <Card className="bg-muted/30">
           <CardContent className="p-6 space-y-4">
-            {resume.trim() ? (
-              <>
-                <ResumePreview resume={resume} inputs={inputs} loading={status.loading} />
-                {!status.loading && (
-                  <ExportBar content={resume} filename="targeted-resume" />
-                )}
-              </>
-            ) : inputs.resumeText && inputs.jobText ? (
-              <div className="text-sm text-muted-foreground">
-                Ready — click <b>Generate</b>.
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">Add your résumé & job first.</div>
+            <ResumePreview />
+            {!loading && resume.trim() && (
+              <ExportBar content={resume} filename="targeted-resume" />
             )}
           </CardContent>
         </Card>

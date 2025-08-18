@@ -38,6 +38,7 @@ interface Resume {
 }
 
 interface PersistenceStore {
+  profileId: string | null;
   currentResumeId: string | null;
   versions: ResumeVersion[];
   resumes: Resume[];
@@ -52,11 +53,30 @@ interface PersistenceStore {
   setCurrentResume: (resumeId: string) => void;
 }
 
-export const usePersistenceStore = create<PersistenceStore>((set, get) => ({
-  currentResumeId: null,
-  versions: [],
-  resumes: [],
-  loading: false,
+export const usePersistenceStore = create<PersistenceStore>((set, get) => {
+  // Helper to fetch and cache the profile ID
+  async function fetchProfileId(userId: string): Promise<string> {
+    const { profileId } = get();
+    if (profileId) return profileId;
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !profile) throw new Error('Profile not found');
+
+    set({ profileId: profile.id });
+    return profile.id;
+  }
+
+  return {
+    profileId: null,
+    currentResumeId: null,
+    versions: [],
+    resumes: [],
+    loading: false,
 
   saveDraft: async (inputs, outputs, settings, title = 'Untitled Resume') => {
     const { user } = useAuthStore.getState();
@@ -125,20 +145,13 @@ export const usePersistenceStore = create<PersistenceStore>((set, get) => ({
     set({ loading: true });
     
     try {
-      // Get user profile first
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!profile) throw new Error('Profile not found');
+      const profileId = await fetchProfileId(user.id);
 
       // Get resumes
       const { data, error } = await supabase
         .from('resumes')
         .select('*')
-        .eq('profile_id', profile.id)
+        .eq('profile_id', profileId)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -176,20 +189,13 @@ export const usePersistenceStore = create<PersistenceStore>((set, get) => ({
     const { user } = useAuthStore.getState();
     if (!user) throw new Error('User not authenticated');
 
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile) throw new Error('Profile not found');
+    const profileId = await fetchProfileId(user.id);
 
     // Create resume
     const { data, error } = await supabase
       .from('resumes')
       .insert({
-        profile_id: profile.id,
+        profile_id: profileId,
         title
       })
       .select()
@@ -207,4 +213,5 @@ export const usePersistenceStore = create<PersistenceStore>((set, get) => ({
     set({ currentResumeId: resumeId });
     get().loadVersions(resumeId);
   },
-}));
+};
+});

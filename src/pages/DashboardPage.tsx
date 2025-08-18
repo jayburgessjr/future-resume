@@ -379,7 +379,7 @@ const DashboardPage = () => {
                 </div>
                 <ToolkitsList
                   toolkits={toolkits}
-                  onCreateNew={() => navigate('/builder')}
+                  onCreateNew={() => navigate('/builder?step=resume&autostart=1')}
                 />
               </section>
             </div>

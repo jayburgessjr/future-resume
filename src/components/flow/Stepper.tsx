@@ -1,4 +1,6 @@
 import { Check, FileText, Mail, Star, MessageCircle } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { preserveQuery } from "@/lib/route";
 
 interface StepperProps {
   currentStep: string;
@@ -15,6 +17,15 @@ const stepConfig = {
 
 export const Stepper = ({ currentStep, steps, onStepClick }: StepperProps) => {
   const getCurrentStepIndex = () => steps.indexOf(currentStep);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const goToStep = (step: string) => {
+    const current = new URLSearchParams(location.search);
+    const merged = preserveQuery(current, { step });
+    navigate({ pathname: location.pathname, search: merged.toString() }, { replace: true });
+    onStepClick(step);
+  };
 
   return (
     <div className="flex items-center justify-between max-w-2xl mx-auto">
@@ -28,7 +39,7 @@ export const Stepper = ({ currentStep, steps, onStepClick }: StepperProps) => {
         return (
           <div key={step} className="flex items-center">
             <button
-              onClick={() => isAccessible && onStepClick(step)}
+              onClick={() => isAccessible && goToStep(step)}
               disabled={!isAccessible}
               className={`
                 flex flex-col items-center space-y-2 p-3 rounded-xl transition-all

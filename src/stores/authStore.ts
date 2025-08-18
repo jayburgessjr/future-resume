@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthResponse, AuthTokenResponsePassword } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscriptionStore } from './subscriptionStore';
 
@@ -8,10 +8,10 @@ interface AuthStore {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  setAuth: (user: User | null, session: Session | null) => void;
+  setAuth: (user: User | null, session: Session | null) => Promise<void>;
   setLoading: (loading: boolean) => void;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, redirectUrl?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<AuthTokenResponsePassword>;
+  signUp: (email: string, password: string, redirectUrl?: string) => Promise<AuthResponse>;
   signOut: () => Promise<void>;
 }
 
@@ -22,14 +22,12 @@ export const useAuthStore = create<AuthStore>()(
       session: null,
       loading: true,
 
-      setAuth: (user, session) => {
+      setAuth: async (user, session) => {
         set({ user, session, loading: false });
-        
+
         // Check subscription status when user is authenticated
         if (user && session) {
-          setTimeout(() => {
-            useSubscriptionStore.getState().checkSubscription();
-          }, 0);
+          await useSubscriptionStore.getState().checkSubscription();
         }
       },
 
@@ -42,7 +40,10 @@ export const useAuthStore = create<AuthStore>()(
           email,
           password,
         });
-        return { error };
+        if (data?.session) {
+          await get().setAuth(data.user, data.session);
+        }
+        return { data, error };
       },
 
       signUp: async (email: string, password: string, redirectUrl?: string) => {
@@ -53,7 +54,10 @@ export const useAuthStore = create<AuthStore>()(
             emailRedirectTo: redirectUrl || `${window.location.origin}/`,
           },
         });
-        return { error };
+        if (data?.session) {
+          await get().setAuth(data.user, data.session);
+        }
+        return { data, error };
       },
 
       signOut: async () => {

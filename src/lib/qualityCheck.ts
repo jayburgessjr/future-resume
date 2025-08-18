@@ -141,7 +141,7 @@ function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function generateRationale(score: number, factors: any): string {
+function generateRationale(score: number, factors: GreatnessCheckResult["factors"]): string {
   if (score >= 0.9) {
     return "Excellent resume with strong keyword alignment, clear structure, and optimal readability";
   } else if (score >= 0.8) {

@@ -24,6 +24,10 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      // Allow usage of the `any` type in legacy code until it's fully typed
+      "@typescript-eslint/no-explicit-any": "off",
+      // Permit CommonJS style imports where necessary
+      "@typescript-eslint/no-require-imports": "off",
     },
   }
 );

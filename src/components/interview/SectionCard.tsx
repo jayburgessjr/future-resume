@@ -68,7 +68,7 @@ export function SectionCard({ title, content, type = 'text', wordLimit, badge }:
         }
         break;
 
-      case 'email':
+      case 'email': {
         const wordCount = getWordCount(content as string);
         const isOverLimit = wordLimit && wordCount > wordLimit;
         return (
@@ -87,6 +87,7 @@ export function SectionCard({ title, content, type = 'text', wordLimit, badge }:
             </div>
           </div>
         );
+      }
 
       case 'kpi':
         return (

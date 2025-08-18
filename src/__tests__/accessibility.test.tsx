@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { UpgradeModal } from '../components/subscription/UpgradeModal';
 
 // Mock the subscription store
@@ -18,16 +18,16 @@ describe('Accessibility Tests', () => {
     });
 
     it('should have proper button focus styles', () => {
-      const { container } = render(<UpgradeModal open={true} onOpenChange={() => {}} />);
-      
+      render(<UpgradeModal open={true} onOpenChange={() => {}} />);
+
       // Check that buttons exist with focus classes
-      const buttons = container.querySelectorAll('button');
+      const buttons = screen.getAllByRole('button');
       expect(buttons.length).toBeGreaterThan(0);
-      
+
       // Check for focus ring classes
-      const upgradeButton = Array.from(buttons).find((btn: Element) => 
-        (btn as HTMLButtonElement).textContent?.includes('Upgrade')
-      );
+      const upgradeButton = screen.getByRole('button', {
+        name: /upgrade/i,
+      });
       expect(upgradeButton).toBeTruthy();
     });
   });

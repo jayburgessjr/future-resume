@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppDataStore } from "@/stores/appData";
 import { useDashboardStore } from "@/stores/dashboardStore";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const SaveToolkitButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,7 +71,7 @@ export const SaveToolkitButton = () => {
   if (!user) {
     return (
       <Button asChild variant="outline">
-        <a href="/auth">Sign In to Save</a>
+        <Link to="/auth">Sign In to Save</Link>
       </Button>
     );
   }

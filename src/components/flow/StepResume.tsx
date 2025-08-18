@@ -5,11 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Sparkles, AlertCircle } from "lucide-react";
 import { useAppDataStore } from "@/stores/appData";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { useToast } from "@/hooks/use-toast";
+import { ResumePreview } from "@/components/common/ResumePreview";
 
 export const StepResume = () => {
   const {
@@ -147,7 +147,9 @@ export const StepResume = () => {
 
         {/* Generate Button */}
         <Button
-          onClick={handleGenerate}
+          onClick={async () => {
+            await handleGenerate();
+          }}
           disabled={status.loading || !inputs.resumeText.trim() || !inputs.jobText.trim()}
           className="w-full bg-gradient-to-r from-primary to-accent text-white hover:scale-105 transition-transform"
           size="lg"
@@ -180,48 +182,10 @@ export const StepResume = () => {
         )}
 
         <Card className="bg-muted/30">
-          <CardContent className="p-6">
-            {status.loading ? (
-              <div className="space-y-3 min-h-[400px]">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-2/3" />
-              </div>
-            ) : outputs?.resume ? (
-              <div className="space-y-4">
-                <div className="bg-background rounded-lg p-4 max-h-[400px] overflow-y-auto">
-                  <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
-                    {outputs.resume}
-                  </pre>
-                </div>
-
-                <ExportBar
-                  content={outputs.resume}
-                  filename="targeted-resume"
-                />
-              </div>
-            ) : inputs.resumeText && inputs.jobText ? (
-              <div className="min-h-[400px] flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <p className="text-muted-foreground">
-                    Resume ready to generate—tap Generate.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="min-h-[400px] flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <p className="text-muted-foreground">
-                    Add your resume and job description to get started.
-                  </p>
-                  <a href="#resume" className="text-primary hover:underline">
-                    Add inputs
-                  </a>
-                </div>
-              </div>
+          <CardContent className="p-6 space-y-4">
+            <ResumePreview resume={outputs?.resume ?? ''} inputs={inputs} loading={status.loading} />
+            {outputs?.resume && !status.loading && (
+              <ExportBar content={outputs.resume} filename="targeted-resume" />
             )}
           </CardContent>
         </Card>

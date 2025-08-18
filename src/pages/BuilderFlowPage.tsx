@@ -21,6 +21,11 @@ type FlowStep = 'resume' | 'cover-letter' | 'highlights' | 'interview';
 
 const steps: FlowStep[] = ['resume', 'cover-letter', 'highlights', 'interview'];
 
+const useQuery = () => {
+  if (typeof window === 'undefined') return new URLSearchParams('');
+  return new URLSearchParams(window.location.search);
+};
+
 const BuilderFlowPage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +44,6 @@ const BuilderFlowPage = () => {
     status,
     loadToolkitIntoBuilder,
     getFirstIncompleteStep,
-    generateResume,
     getWordCount,
   } = useAppDataStore();
 
@@ -81,18 +85,17 @@ const BuilderFlowPage = () => {
   }, [currentStep, setSearchParams, searchParams]);
 
   useEffect(() => {
-    const autostart = searchParams.get('autostart');
-    if (
-      autostart === '1' &&
-      !outputs?.resume &&
-      inputs.resumeText &&
-      inputs.jobText
-    ) {
-      (async () => {
-        await generateResume();
-      })();
+    const q = useQuery();
+    const auto = q.get('autostart') === '1';
+    if (auto && !useAppDataStore.getState().outputs?.resume) {
+      const { resumeText, jobText } = useAppDataStore.getState().inputs;
+      if (resumeText?.trim() && jobText?.trim()) {
+        useAppDataStore.getState().generateResume();
+      }
     }
-  }, [searchParams, outputs?.resume, inputs.resumeText, inputs.jobText, generateResume]);
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();

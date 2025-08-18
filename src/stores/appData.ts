@@ -5,6 +5,22 @@ import { usePersistenceStore } from './persistenceStore';
 import { performGreatnessCheck, logQualityAssessment } from '@/lib/qualityCheck';
 import { supabase } from '@/integrations/supabase/client';
 
+const stripComments = (s?: string) =>
+  (s ?? '').replace(/<!--[\s\S]*?-->/g, '').trim();
+
+const extractResume = (res: any): string => {
+  if (!res) return '';
+  if (typeof res === 'string') return stripComments(res);
+  const candidates = [
+    (res as any).resume,
+    res.output?.resume,
+    res.outputs?.resume,
+    res.data?.resume,
+    res.finalResume,
+  ].filter(Boolean);
+  return stripComments(String(candidates[0] || ''));
+};
+
 interface AppSettings {
   mode: 'concise' | 'detailed' | 'executive';
   voice: 'first-person' | 'third-person';
@@ -116,14 +132,19 @@ export const useAppDataStore = create<AppDataStore>()(
 
       hydrateFromDashboard: ({ resumeText, jobText, companySignal }) =>
         set((state) => ({
-          inputs: { ...state.inputs, resumeText, jobText, companySignal },
-          outputs: state.outputs ? { ...state.outputs, resume: null } : null,
+          inputs: {
+            ...state.inputs,
+            resumeText: resumeText ?? '',
+            jobText: jobText ?? '',
+            companySignal: companySignal ?? '',
+          },
+          outputs: null,
           flags: { ...state.flags, hasRunResume: false },
         })),
 
       generateResume: async () => {
         const { inputs, settings } = get();
-        if (!inputs.resumeText || !inputs.jobText) return;
+        if (!inputs.resumeText?.trim() || !inputs.jobText?.trim()) return;
         set((current) => ({
           status: { ...current.status, loading: true },
         }));
@@ -134,20 +155,20 @@ export const useAppDataStore = create<AppDataStore>()(
             jobDescription: inputs.jobText,
             manualEntry: inputs.companySignal,
           };
-          const result: ResumeGenerationResult = await generateResumeFlow(params);
-          const resumeText = result.finalResume ?? result.resume ?? '';
+          const raw: ResumeGenerationResult = await generateResumeFlow(params);
+          const resumeText = extractResume(raw);
           set((s) => ({
             outputs: s.outputs
-              ? { ...s.outputs, resume: resumeText }
+              ? { ...s.outputs, resume: resumeText, metadata: raw.metadata }
               : {
                   resume: resumeText,
                   coverLetter: '',
                   highlights: [],
                   toolkit: { questions: [], followUpEmail: '', skillGaps: [] },
                   weeklyKPITracker: '',
-                  metadata: result.metadata,
+                  metadata: raw.metadata,
                 },
-            flags: { ...s.flags, hasRunResume: !!resumeText },
+            flags: { ...s.flags, hasRunResume: resumeText.length > 0 },
             status: { ...s.status, loading: false },
           }));
         } catch (e) {

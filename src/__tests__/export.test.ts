@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { 
-  getWordCount, 
-  validateResumeLength, 
-  toPlainText, 
-  toMarkdown, 
+import {
+  getWordCount,
+  validateResumeLength,
+  toPlainText,
+  toMarkdown,
   formatExportContent,
   copyToClipboard,
   downloadFile,
   generateFilename
 } from '../lib/export';
+import { logger } from '../lib/logger';
 
 describe('Export Utilities', () => {
   describe('getWordCount', () => {
@@ -117,44 +118,52 @@ describe('Export Utilities', () => {
     });
   });
 
-  describe('copyToClipboard', () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
+    describe('copyToClipboard', () => {
+      beforeEach(() => {
+        vi.clearAllMocks();
+        Object.assign(navigator, {
+          clipboard: {
+            writeText: vi.fn().mockResolvedValue(undefined)
+          }
+        });
+      });
+
+      it('should copy text successfully', async () => {
+        const result = await copyToClipboard('test text');
+
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test text');
+        expect(result).toBe(true);
+      });
+
+      it('should handle clipboard API failure with manual copy', async () => {
+        vi.mocked(navigator.clipboard.writeText).mockRejectedValueOnce(new Error('Permission denied'));
+
+        // Mock document methods for manual copy
+        const createElement = vi.spyOn(document, 'createElement').mockReturnValue({
+          value: '',
+          style: {} as CSSStyleDeclaration,
+          select: vi.fn(),
+        } as HTMLTextAreaElement);
+
+        const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
+        const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+        const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
+        const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
+
+        const result = await copyToClipboard('test text');
+
+        expect(createElement).toHaveBeenCalledWith('textarea');
+        expect(promptSpy).toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalled();
+        expect(result).toBe(false);
+
+        createElement.mockRestore();
+        appendChild.mockRestore();
+        removeChild.mockRestore();
+        promptSpy.mockRestore();
+        errorSpy.mockRestore();
+      });
     });
-
-    it('should copy text successfully', async () => {
-      const result = await copyToClipboard('test text');
-      
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('test text');
-      expect(result).toBe(true);
-    });
-
-    it('should handle clipboard API failure with fallback', async () => {
-      vi.mocked(navigator.clipboard.writeText).mockRejectedValueOnce(new Error('Permission denied'));
-      
-      // Mock document methods for fallback
-      const createElement = vi.spyOn(document, 'createElement').mockReturnValue({
-        value: '',
-        style: {},
-        select: vi.fn(),
-      } as any);
-      
-      const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(vi.fn());
-      const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(vi.fn());
-      const execCommand = vi.spyOn(document, 'execCommand').mockReturnValue(true);
-
-      const result = await copyToClipboard('test text');
-
-      expect(createElement).toHaveBeenCalledWith('textarea');
-      expect(execCommand).toHaveBeenCalledWith('copy');
-      expect(result).toBe(true);
-
-      createElement.mockRestore();
-      appendChild.mockRestore();
-      removeChild.mockRestore();
-      execCommand.mockRestore();
-    });
-  });
 
   describe('downloadFile', () => {
     beforeEach(() => {
@@ -165,12 +174,12 @@ describe('Export Utilities', () => {
       const createElement = vi.spyOn(document, 'createElement').mockReturnValue({
         href: '',
         download: '',
-        style: { display: '' },
+        style: { display: '' } as CSSStyleDeclaration,
         click: vi.fn(),
-      } as any);
-      
-      const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(vi.fn());
-      const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(vi.fn());
+      } as HTMLAnchorElement);
+
+      const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
+      const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
 
       downloadFile('content', 'test.txt', 'text/plain');
 

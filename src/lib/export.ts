@@ -3,12 +3,14 @@
  * Handles text formatting, file downloads, and clipboard operations
  */
 
+import { logger } from './logger';
+
 export interface ExportContent {
   title: string;
   content: string;
   metadata?: {
     generatedAt?: Date;
-    settings?: any;
+    settings?: Record<string, unknown>;
     wordCount?: number;
   };
 }
@@ -69,31 +71,48 @@ export function formatExportContent(exportData: ExportContent, format: 'txt' | '
   return header + formattedContent;
 }
 
+
 /**
  * Copy text to clipboard
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
+  const manualCopy = () => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    window.prompt('Copy to clipboard: Ctrl+C, Enter', text);
+    document.body.removeChild(textArea);
+  };
+
+  if (!navigator?.clipboard) {
+    logger.warn('Clipboard API not supported');
+    try {
+      manualCopy();
+    } catch (fallbackError) {
+      logger.error('Manual copy failed:', fallbackError);
+    }
+    return false;
+  }
+
   try {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (error) {
-    console.error('Failed to copy to clipboard:', error);
-    
-    // Fallback for older browsers
-    try {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.opacity = '0';
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      return true;
-    } catch (fallbackError) {
-      console.error('Fallback copy failed:', fallbackError);
-      return false;
+    if (error instanceof DOMException && error.name === 'NotAllowedError') {
+      logger.error('Clipboard permission denied:', error);
+    } else {
+      logger.error('Failed to copy to clipboard:', error);
     }
+
+    try {
+      manualCopy();
+    } catch (fallbackError) {
+      logger.error('Manual copy failed:', fallbackError);
+    }
+    return false;
   }
 }
 

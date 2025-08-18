@@ -136,7 +136,7 @@ export const useAppDataStore = create<AppDataStore>()(
           const result: ResumeGenerationResult = await generateResumeFlow(params);
 
           const outputs: AppOutputs = {
-            resume: result.finalResume,
+            resume: result.finalResume ?? result.resume,
             coverLetter: result.coverLetter,
             highlights: result.recruiterHighlights,
             toolkit: result.interviewToolkit,

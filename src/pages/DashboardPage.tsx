@@ -205,8 +205,10 @@ const DashboardPage = () => {
   };
 
   const handleSendToBuilder = (job: Job) => {
+    type MasterResumeWithContent = Resume & { content?: string };
+    const resumeContent = (masterResume as MasterResumeWithContent)?.content ?? '';
     hydrateFromDashboard({
-      resumeText: (masterResume as any)?.content ?? '',
+      resumeText: resumeContent,
       jobText: job.description ?? '',
       companySignal: job.company_signal ?? ''
     });
@@ -379,7 +381,7 @@ const DashboardPage = () => {
                 </div>
                 <ToolkitsList
                   toolkits={toolkits}
-                  onCreateNew={() => navigate('/builder')}
+                  onCreateNew={() => navigate('/builder?step=resume&autostart=1')}
                 />
               </section>
             </div>
@@ -395,7 +397,11 @@ const DashboardPage = () => {
                   }
                 }}
                 onGenerateTargeted={() => {
-                  const selectedJD = jobs[0];
+                  const selectedJD = jobs[0] as (Job & {
+                    jobDescription?: string;
+                    text?: string;
+                    companySignal?: string;
+                  }) | undefined;
                   useAppData.getState().hydrateFromDashboard({
                     resumeText: (masterResume ?? '').toString(),
                     jobText:
@@ -405,7 +411,7 @@ const DashboardPage = () => {
                       '',
                     companySignal:
                       selectedJD?.company_signal ??
-                      (selectedJD as any)?.companySignal ??
+                      selectedJD?.companySignal ??
                       ''
                   });
                   navigate('/builder?step=resume&autostart=1');

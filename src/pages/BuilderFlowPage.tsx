@@ -7,18 +7,17 @@ import { ArrowLeft, User, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppData } from "@/stores/appData";
+import { preserveQuery, ensureAutostart } from "@/lib/route";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { Badge } from "@/components/ui/badge";
-import { Stepper } from "@/components/flow/Stepper";
+import { Stepper, type FlowStep } from "@/components/flow/Stepper";
 import { StepResume } from "@/components/flow/StepResume";
 import { StepCoverLetter } from "@/components/flow/StepCoverLetter";
 import { StepHighlights } from "@/components/flow/StepHighlights";
 import { StepInterview } from "@/components/flow/StepInterview";
 import { FlowFooter } from "@/components/flow/FlowFooter";
 import { ReviewBar } from "@/components/flow/ReviewBar";
-
-type FlowStep = 'resume' | 'cover-letter' | 'highlights' | 'interview';
 
 const steps: FlowStep[] = ['resume', 'cover-letter', 'highlights', 'interview'];
 
@@ -45,23 +44,24 @@ const BuilderFlowPage = () => {
     if (ran.current) return;
     ran.current = true;
 
-    const p = new URLSearchParams(window.location.search);
-    if (!p.get('step')) p.set('step', 'resume');
-    if (!p.get('autostart')) p.set('autostart', '1');
-    const target = `${window.location.pathname}?${p.toString()}`;
-    if (target !== window.location.href) {
+    const now = new URL(window.location.href);
+    let qp = new URLSearchParams(now.search);
+    if (!qp.get('step')) qp.set('step', 'resume');
+    qp = ensureAutostart(qp, qp.get('autostart') as '0' | '1' | undefined);
+    const target = `${now.pathname}?${qp.toString()}`;
+    if (target !== now.href) {
       window.history.replaceState({}, '', target);
     }
 
     const state = useAppData.getState();
     const { resumeText, jobText } = state.inputs;
     const hasOutput = !!state.outputs?.resume?.trim();
-    if (
-      p.get('autostart') === '1' &&
+    const shouldAuto =
+      qp.get('autostart') === '1' &&
       resumeText?.trim() &&
       jobText?.trim() &&
-      !hasOutput
-    ) {
+      !hasOutput;
+    if (shouldAuto) {
       state.generateResume();
     }
   }, []);
@@ -70,18 +70,24 @@ const BuilderFlowPage = () => {
     // Handle toolkit loading from URL params
     const toolkitId = searchParams.get('toolkit');
     if (toolkitId) {
-      loadToolkitIntoBuilder(toolkitId).then(() => {
-        // After loading, determine the appropriate step
-        const firstIncompleteStep = getFirstIncompleteStep();
-        setCurrentStep(firstIncompleteStep);
-        // Clean up URL
-        setSearchParams({ step: firstIncompleteStep });
-      }).catch((error) => {
-        console.error('Error loading toolkit:', error);
-        // If loading fails, start from the beginning
-        setCurrentStep('resume');
-        setSearchParams({ step: 'resume' });
-      });
+      loadToolkitIntoBuilder(toolkitId)
+        .then(() => {
+          // After loading, determine the appropriate step
+          const firstIncompleteStep = getFirstIncompleteStep();
+          setCurrentStep(firstIncompleteStep);
+          // Clean up URL but preserve existing params
+          const current = new URLSearchParams(window.location.search);
+          const merged = preserveQuery(current, { step: firstIncompleteStep });
+          setSearchParams(merged);
+        })
+        .catch((error) => {
+          console.error('Error loading toolkit:', error);
+          // If loading fails, start from the beginning
+          setCurrentStep('resume');
+          const current = new URLSearchParams(window.location.search);
+          const merged = preserveQuery(current, { step: 'resume' });
+          setSearchParams(merged);
+        });
     } else {
       // Normal step handling
       const requestedStep = currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume';
@@ -99,9 +105,22 @@ const BuilderFlowPage = () => {
     // Update URL when step changes (but not during toolkit loading)
     const toolkitId = searchParams.get('toolkit');
     if (!toolkitId) {
-      setSearchParams({ step: currentStep });
+      const current = new URLSearchParams(window.location.search);
+      const merged = preserveQuery(current, { step: currentStep });
+      setSearchParams(merged);
     }
   }, [currentStep, setSearchParams, searchParams]);
+
+  useEffect(() => {
+    if (outputs?.resume?.trim()) {
+      const now = new URL(window.location.href);
+      const qp = new URLSearchParams(now.search);
+      if (qp.get('autostart') === '1') {
+        const merged = preserveQuery(qp, { autostart: '0' });
+        window.history.replaceState({}, '', `${now.pathname}?${merged.toString()}`);
+      }
+    }
+  }, [outputs?.resume]);
 
   const handleSignOut = async () => {
     await signOut();

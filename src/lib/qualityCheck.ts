@@ -2,6 +2,14 @@
  * Quality assessment utilities for resume generation
  */
 
+export interface QualitySettings {
+  mode: 'concise' | 'detailed' | 'executive';
+  voice: 'first-person' | 'third-person';
+  format: 'markdown' | 'plain_text' | 'json';
+  includeTable: boolean;
+  proofread: boolean;
+}
+
 interface GreatnessCheckResult {
   score: number; // 0-100
   rationale: string;
@@ -19,7 +27,7 @@ interface GreatnessCheckResult {
 export function performGreatnessCheck(
   resumeContent: string,
   jobDescription: string,
-  settings: any
+  settings: QualitySettings
 ): GreatnessCheckResult {
   const factors = {
     keywordAlignment: assessKeywordAlignment(resumeContent, jobDescription),
@@ -49,10 +57,11 @@ function assessKeywordAlignment(resume: string, jobDescription: string): number 
 
   const jobKeywords = extractKeywords(jobDescription.toLowerCase());
   const resumeContent = resume.toLowerCase();
-  
-  const matchCount = jobKeywords.filter(keyword => 
-    resumeContent.includes(keyword)
-  ).length;
+
+  const matchCount = jobKeywords.filter((keyword) => {
+    const pattern = new RegExp(`\\b${escapeRegExp(keyword)}\\b`, 'i');
+    return pattern.test(resumeContent);
+  }).length;
 
   return Math.min(matchCount / Math.max(jobKeywords.length, 1), 1);
 }
@@ -91,7 +100,7 @@ function assessStructure(content: string): number {
   return Math.min(score, 1);
 }
 
-function assessCompleteness(content: string, settings: any): number {
+function assessCompleteness(content: string, settings: QualitySettings): number {
   let score = 0;
   const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
   
@@ -126,6 +135,10 @@ function extractKeywords(text: string): string[] {
     .filter(word => word.length > 3)
     .concat(commonKeywords.filter(keyword => text.includes(keyword)))
     .slice(0, 20); // Limit to top 20 keywords
+}
+
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function generateRationale(score: number, factors: any): string {

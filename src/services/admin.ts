@@ -1,19 +1,31 @@
 import { supabase } from '@/integrations/supabase/client';
+import { z } from 'zod';
 
-export interface AdminAnalytics {
-  totals: {
-    users: number;
-    pro: number;
-    free: number;
-    toolkits_7d: number;
-    toolkits_30d: number;
-    active_7d: number;
-  };
-  series: {
-    new_users_by_day: Array<{ day: string; count: number }>;
-    toolkits_by_day: Array<{ day: string; count: number }>;
-  };
-}
+/**
+ * Runtime schema for the `admin_analytics_summary` RPC response
+ */
+const AdminAnalyticsResponseSchema = z.object({
+  totals: z.object({
+    users: z.number(),
+    pro: z.number(),
+    free: z.number(),
+    toolkits_7d: z.number(),
+    toolkits_30d: z.number(),
+    active_7d: z.number(),
+  }),
+  series: z.object({
+    new_users_by_day: z.array(
+      z.object({ day: z.string(), count: z.number() })
+    ),
+    toolkits_by_day: z.array(
+      z.object({ day: z.string(), count: z.number() })
+    ),
+  }),
+});
+
+export type AdminAnalyticsResponse = z.infer<
+  typeof AdminAnalyticsResponseSchema
+>;
 
 export interface AdminUser {
   id: string;
@@ -53,15 +65,17 @@ export async function checkIsAdmin(): Promise<boolean> {
 /**
  * Get analytics summary for admin dashboard
  */
-export async function getAnalyticsSummary(days: number = 30): Promise<AdminAnalytics> {
+export async function getAnalyticsSummary(
+  days: number = 30
+): Promise<AdminAnalyticsResponse> {
   const { data, error } = await supabase.rpc('admin_analytics_summary', { days });
-  
+
   if (error) {
     console.error('Error fetching analytics:', error);
     throw new Error('Failed to fetch analytics data');
   }
-  
-  return data as any as AdminAnalytics;
+
+  return AdminAnalyticsResponseSchema.parse(data);
 }
 
 /**

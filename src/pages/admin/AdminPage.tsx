@@ -8,11 +8,11 @@ import { Section } from '@/components/admin/Section';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  getAnalyticsSummary, 
-  getUsersList, 
+import {
+  getAnalyticsSummary,
+  getUsersList,
   getToolkitsList,
-  type AdminAnalytics,
+  type AdminAnalyticsResponse,
   type AdminUser,
   type AdminToolkit
 } from '@/services/admin';
@@ -29,7 +29,9 @@ import {
 } from 'lucide-react';
 
 export const AdminPage = () => {
-  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
+  const [analytics, setAnalytics] = useState<
+    AdminAnalyticsResponse | null
+  >(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [toolkits, setToolkits] = useState<AdminToolkit[]>([]);
   const [loading, setLoading] = useState(true);

@@ -37,7 +37,6 @@ const BuilderFlowPage = () => {
     settings,
     inputs,
     outputs,
-    flags,
     status,
     loadToolkitIntoBuilder,
     getFirstIncompleteStep,
@@ -120,7 +119,6 @@ const BuilderFlowPage = () => {
         const resumeText = outputs?.resume?.trim() ?? '';
         const words = resumeText ? getWordCount(resumeText) : 0;
         return (
-          flags.hasRunResume &&
           resumeText.length > 0 &&
           words <= 550 &&
           !status.loading

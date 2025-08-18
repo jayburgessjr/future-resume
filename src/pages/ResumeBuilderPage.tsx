@@ -500,13 +500,30 @@ const PreviewStep = ({ settings, inputs, outputs }) => {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Ready to Generate!</h3>
-        <p className="text-muted-foreground">
-          Your resume will be generated based on your configuration and inputs. 
-          {outputs ? " Your previous resume will be updated." : ""}
-        </p>
-      </div>
+      {!outputs?.resume ? (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Ready to Generate!</h3>
+          <p className="text-muted-foreground">
+            Your resume will be generated based on your configuration and inputs.
+            {outputs ? " Your previous resume will be updated." : ""}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Generated Resume</h3>
+          <div className="bg-background rounded-lg p-4 max-h-[400px] overflow-y-auto">
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
+              {outputs.resume}
+            </pre>
+          </div>
+          <ExportBar
+            content={outputs.resume}
+            title="Resume"
+            metadata={{ wordCount: outputs.resume.split(/\s+/).filter(w => w).length }}
+            className="text-xs"
+          />
+        </div>
+      )}
     </div>
   );
 };

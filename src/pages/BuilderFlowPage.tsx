@@ -75,18 +75,18 @@ const BuilderFlowPage = () => {
         const firstIncompleteStep = getFirstIncompleteStep();
         setCurrentStep(firstIncompleteStep);
         // Clean up URL
-        const params: Record<string, string> = { step: firstIncompleteStep };
-        const autostart = searchParams.get('autostart');
-        if (autostart) params.autostart = autostart;
-        setSearchParams(params);
+        setSearchParams(
+          { step: firstIncompleteStep },
+          { preserveQuery: true } as any
+        );
       }).catch((error) => {
         console.error('Error loading toolkit:', error);
         // If loading fails, start from the beginning
         setCurrentStep('resume');
-        const params: Record<string, string> = { step: 'resume' };
-        const autostart = searchParams.get('autostart');
-        if (autostart) params.autostart = autostart;
-        setSearchParams(params);
+        setSearchParams(
+          { step: 'resume' },
+          { preserveQuery: true } as any
+        );
       });
     } else {
       // Normal step handling
@@ -105,10 +105,7 @@ const BuilderFlowPage = () => {
     // Update URL when step changes (but not during toolkit loading)
     const toolkitId = searchParams.get('toolkit');
     if (!toolkitId) {
-      const params: Record<string, string> = { step: currentStep };
-      const autostart = searchParams.get('autostart');
-      if (autostart) params.autostart = autostart;
-      setSearchParams(params);
+      setSearchParams({ step: currentStep }, { preserveQuery: true } as any);
     }
   }, [currentStep, setSearchParams, searchParams]);
 

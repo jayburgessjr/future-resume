@@ -17,6 +17,14 @@ import { StepInterview } from "@/components/flow/StepInterview";
 import { FlowFooter } from "@/components/flow/FlowFooter";
 import { ReviewBar } from "@/components/flow/ReviewBar";
 
+if (typeof window !== 'undefined') {
+  const p = new URLSearchParams(window.location.search);
+  if (!p.get('step')) p.set('step','resume');
+  if (!p.get('autostart')) p.set('autostart','1');
+  const target = `${window.location.pathname}?${p.toString()}`;
+  if (target !== window.location.href) window.history.replaceState({}, '', target);
+}
+
 type FlowStep = 'resume' | 'cover-letter' | 'highlights' | 'interview';
 
 const steps: FlowStep[] = ['resume', 'cover-letter', 'highlights', 'interview'];

@@ -20,10 +20,13 @@ export const StepResume = () => {
     updateInputs,
     generateResume,
     getWordCount,
-    isOverLimit,
     status
   } = useAppDataStore();
   const { toast } = useToast();
+
+  const resume = outputs?.resume ?? "";
+  const words = resume.trim() ? getWordCount(resume) : 0;
+  const canContinue = words > 0 && words <= 550;
 
   const handleGenerate = async () => {
     if (!inputs.resumeText.trim() || !inputs.jobText.trim()) {
@@ -49,9 +52,6 @@ export const StepResume = () => {
       });
     }
   };
-
-  const wordCount = outputs?.resume ? getWordCount(outputs.resume) : 0;
-  const isOverWordLimit = outputs?.resume ? isOverLimit(outputs.resume, 550) : false;
 
   return (
     <div className="grid lg:grid-cols-2 gap-8 p-8">
@@ -163,29 +163,36 @@ export const StepResume = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Resume Preview</h3>
-          {outputs?.resume && (
+          {resume && (
             <div className="flex items-center gap-2">
-              <Badge variant={isOverWordLimit ? "destructive" : "secondary"}>
-                {wordCount}/550 words
+              <Badge variant={canContinue ? "secondary" : "destructive"}>
+                {words}/550 words
               </Badge>
-              {isOverWordLimit && (
+              {!canContinue && (
                 <AlertCircle className="w-4 h-4 text-destructive" />
               )}
             </div>
           )}
         </div>
-        {outputs?.resume && isOverWordLimit && (
-          <p className="text-sm text-destructive">
-            Your résumé exceeds the 550-word limit. Please trim it before
-            continuing.
-          </p>
+        {!canContinue && words > 550 && (
+          <p className="text-orange-600 text-sm mt-2">Over 550 words — trim to continue.</p>
         )}
 
         <Card className="bg-muted/30">
           <CardContent className="p-6 space-y-4">
-            <ResumePreview resume={outputs?.resume ?? ''} inputs={inputs} loading={status.loading} />
-            {outputs?.resume && !status.loading && (
-              <ExportBar content={outputs.resume} filename="targeted-resume" />
+            {resume.trim() ? (
+              <>
+                <ResumePreview resume={resume} inputs={inputs} loading={status.loading} />
+                {!status.loading && (
+                  <ExportBar content={resume} filename="targeted-resume" />
+                )}
+              </>
+            ) : inputs.resumeText && inputs.jobText ? (
+              <div className="text-sm text-muted-foreground">
+                Ready — click <b>Generate</b>.
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">Add your résumé & job first.</div>
             )}
           </CardContent>
         </Card>

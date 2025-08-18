@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+"use client";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,27 +18,15 @@ import { StepInterview } from "@/components/flow/StepInterview";
 import { FlowFooter } from "@/components/flow/FlowFooter";
 import { ReviewBar } from "@/components/flow/ReviewBar";
 
-if (typeof window !== 'undefined') {
-  const p = new URLSearchParams(window.location.search);
-  if (!p.get('step')) p.set('step','resume');
-  if (!p.get('autostart')) p.set('autostart','1');
-  const target = `${window.location.pathname}?${p.toString()}`;
-  if (target !== window.location.href) window.history.replaceState({}, '', target);
-}
-
 type FlowStep = 'resume' | 'cover-letter' | 'highlights' | 'interview';
 
 const steps: FlowStep[] = ['resume', 'cover-letter', 'highlights', 'interview'];
-
-const useQuery = () => {
-  if (typeof window === 'undefined') return new URLSearchParams('');
-  return new URLSearchParams(window.location.search);
-};
 
 const BuilderFlowPage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const runOnce = useRef(false);
   
   const currentStepParam = searchParams.get('step') as FlowStep;
   const [currentStep, setCurrentStep] = useState<FlowStep>(
@@ -54,6 +43,32 @@ const BuilderFlowPage = () => {
     getFirstIncompleteStep,
     getWordCount,
   } = useAppDataStore();
+
+  useEffect(() => {
+    if (runOnce.current) return;
+    runOnce.current = true;
+
+    const p = new URLSearchParams(window.location.search);
+    if (!p.get('step')) p.set('step', 'resume');
+    if (!p.get('autostart')) p.set('autostart', '1');
+    const target = `${window.location.pathname}?${p.toString()}`;
+    if (target !== window.location.href) {
+      window.history.replaceState({}, '', target);
+    }
+
+    const state = useAppDataStore.getState();
+    const { resumeText, jobText } = state.inputs;
+    const hasOutput = !!state.outputs?.resume?.trim();
+    const shouldGenerate =
+      p.get('autostart') === '1' &&
+      resumeText?.trim() &&
+      jobText?.trim() &&
+      !hasOutput;
+
+    if (shouldGenerate) {
+      state.generateResume();
+    }
+  }, []);
 
   useEffect(() => {
     // Handle toolkit loading from URL params
@@ -91,19 +106,6 @@ const BuilderFlowPage = () => {
       setSearchParams({ step: currentStep });
     }
   }, [currentStep, setSearchParams, searchParams]);
-
-  useEffect(() => {
-    const q = useQuery();
-    const auto = q.get('autostart') === '1';
-    if (auto && !useAppDataStore.getState().outputs?.resume) {
-      const { resumeText, jobText } = useAppDataStore.getState().inputs;
-      if (resumeText?.trim() && jobText?.trim()) {
-        useAppDataStore.getState().generateResume();
-      }
-    }
-    // run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleSignOut = async () => {
     await signOut();

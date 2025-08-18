@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "./logger";
 
 export interface ResumeGenerationParams {
   mode: 'concise' | 'detailed' | 'executive';
@@ -44,7 +45,7 @@ export interface ResumeGenerationResult {
  */
 export async function generateResumeFlow(params: ResumeGenerationParams): Promise<ResumeGenerationResult> {
   try {
-    console.log('Starting AI resume generation with 7-phase process...');
+    logger.debug('Starting AI resume generation with 7-phase process...');
     
     // Call the Supabase Edge Function for AI processing
     const { data, error } = await supabase.functions.invoke('generate-resume', {
@@ -52,7 +53,7 @@ export async function generateResumeFlow(params: ResumeGenerationParams): Promis
     });
 
     if (error) {
-      console.error('Resume generation error:', error);
+      logger.error('Resume generation error:', error);
       throw new Error(`Resume generation failed: ${error.message}`);
     }
 
@@ -60,11 +61,11 @@ export async function generateResumeFlow(params: ResumeGenerationParams): Promis
       throw new Error('No data returned from resume generation');
     }
 
-    console.log('✅ AI resume generation completed successfully');
+    logger.debug('✅ AI resume generation completed successfully');
     return data as ResumeGenerationResult;
 
   } catch (error) {
-    console.error('Error in generateResumeFlow:', error);
+    logger.error('Error in generateResumeFlow:', error);
     throw error;
   }
 }

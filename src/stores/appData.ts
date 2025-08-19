@@ -179,15 +179,6 @@ export const useAppDataStore = create<AppDataStore>()(
         set((state) => ({
           inputs: { ...state.inputs, ...newInputs },
         }));
-        
-        // Store inputs for other pages to access
-        const updatedInputs = { ...get().inputs, ...newInputs };
-        if (updatedInputs.resumeText && updatedInputs.jobText) {
-          localStorage.setItem('resume-generation-inputs', JSON.stringify({
-            resumeContent: updatedInputs.resumeText,
-            jobDescription: updatedInputs.jobText,
-          }));
-        }
       },
 
       runGeneration: async () => {

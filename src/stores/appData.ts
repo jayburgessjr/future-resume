@@ -181,11 +181,11 @@ export const useAppDataStore = create<AppDataStore>()(
         }));
         
         // Store inputs for other pages to access
-        const currentState = get();
-        if (currentState.inputs.resumeText && currentState.inputs.jobText) {
+        const updatedInputs = { ...get().inputs, ...newInputs };
+        if (updatedInputs.resumeText && updatedInputs.jobText) {
           localStorage.setItem('resume-generation-inputs', JSON.stringify({
-            resumeContent: currentState.inputs.resumeText,
-            jobDescription: currentState.inputs.jobText,
+            resumeContent: updatedInputs.resumeText,
+            jobDescription: updatedInputs.jobText,
           }));
         }
       },

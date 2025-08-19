@@ -47,22 +47,9 @@ const BuilderFlowPage = () => {
 
     const p = new URLSearchParams(window.location.search);
     if (!p.get('step')) p.set('step', 'resume');
-    if (!p.get('autostart')) p.set('autostart', '1');
     const target = `${window.location.pathname}?${p.toString()}`;
     if (target !== window.location.href) {
       window.history.replaceState({}, '', target);
-    }
-
-    const state = useAppData.getState();
-    const { resumeText, jobText } = state.inputs;
-    const hasOutput = !!state.outputs?.resume?.trim();
-    if (
-      p.get('autostart') === '1' &&
-      resumeText?.trim() &&
-      jobText?.trim() &&
-      !hasOutput
-    ) {
-      state.generateResume();
     }
   }, []);
 
@@ -91,13 +78,7 @@ const BuilderFlowPage = () => {
     } else {
       // Normal step handling
       const requestedStep = currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume';
-      // If we have outputs, route to appropriate step based on completion
-      if (outputs) {
-        const firstIncompleteStep = getFirstIncompleteStep();
-        setCurrentStep(requestedStep === 'resume' ? firstIncompleteStep : requestedStep);
-      } else {
-        setCurrentStep(requestedStep);
-      }
+      setCurrentStep(requestedStep);
     }
   }, [searchParams, loadToolkitIntoBuilder, getFirstIncompleteStep, outputs, currentStepParam]);
 

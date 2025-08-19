@@ -142,7 +142,7 @@ export const useAppDataStore = create<AppDataStore>()(
             jobText: jobText ?? '',
             companySignal: companySignal ?? s.inputs.companySignal,
           },
-          outputs: { ...(s.outputs || {}), resume: '' },
+          outputs: null,
           flags: { ...s.flags, hasRunResume: false },
         })),
 
@@ -160,7 +160,14 @@ export const useAppDataStore = create<AppDataStore>()(
           const raw: ResumeGenerationResult = await generateResumeFlow(params);
           const txt = extractResume(raw);
           set((s) => ({
-            outputs: { ...(s.outputs || {}), resume: txt, metadata: raw.metadata },
+            outputs: {
+              resume: txt,
+              coverLetter: raw.coverLetter || '',
+              highlights: raw.recruiterHighlights || [],
+              toolkit: raw.interviewToolkit || { questions: [], followUpEmail: '', skillGaps: [] },
+              weeklyKPITracker: raw.weeklyKPITracker || '',
+              metadata: raw.metadata
+            },
             flags: { ...s.flags, hasRunResume: txt.length > 0 },
             loading: false,
             status: { ...s.status, loading: false },
@@ -176,9 +183,12 @@ export const useAppDataStore = create<AppDataStore>()(
         })),
 
       updateInputs: (newInputs) => {
-        set((state) => ({
-          inputs: { ...state.inputs, ...newInputs },
-        }));
+        set((state) => {
+          const updatedInputs = { ...state.inputs, ...newInputs };
+          return {
+            inputs: updatedInputs,
+          };
+        });
       },
 
       runGeneration: async () => {

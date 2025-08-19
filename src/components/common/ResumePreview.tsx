@@ -11,15 +11,13 @@ const SkeletonLines = ({ lines }: { lines: number }) => (
 );
 
 export const ResumePreview = () => {
-  const { inputs, outputs, loading } = useAppData((s) => ({
-    inputs: s.inputs,
-    outputs: s.outputs || {},
-    loading: s.loading,
-  }));
+  const inputs = useAppData(s => s.inputs);
+  const outputs = useAppData(s => s.outputs);
+  const loading = useAppData(s => s.loading);
 
   if (loading) return <SkeletonLines lines={6} />;
 
-  const txt = outputs.resume?.trim() || '';
+  const txt = outputs?.resume?.trim() || '';
   if (txt) {
     return (
       <div className="space-y-4">

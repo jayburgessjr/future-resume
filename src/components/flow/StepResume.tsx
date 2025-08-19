@@ -1,4 +1,6 @@
 "use client";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -13,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ResumePreview } from "@/components/common/ResumePreview";
 
 export const StepResume = () => {
+  const [searchParams] = useSearchParams();
   const {
     settings,
     inputs,
@@ -24,6 +27,21 @@ export const StepResume = () => {
   } = useAppData();
   const { toast } = useToast();
 
+  // Handle autostart generation when component mounts
+  useEffect(() => {
+    const autostart = searchParams.get('autostart');
+    const hasInputs = inputs.resumeText?.trim() && inputs.jobText?.trim();
+    const hasOutput = outputs?.resume?.trim();
+    
+    if (autostart === '1' && hasInputs && !hasOutput && !loading) {
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        generateResume();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, inputs.resumeText, inputs.jobText, outputs?.resume, loading, generateResume]);
   const resume = outputs?.resume ?? "";
   const words = (resume.trim().match(/\S+/g) || []).length;
   const canContinue = words > 0 && words <= 550;

@@ -13,7 +13,7 @@ import { ArrowLeft, ArrowRight, FileText, Sparkles, User, LogOut, Settings, PenT
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 // If your store is named useAppData, change this import to: import { useAppData } from "@/stores/appData";
-import { useAppDataStore } from "@/stores/appData";
+import { useAppDataStore, selectGeneratedResume } from "@/stores/appData";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
 import { ExportBar } from "@/components/export/ExportBar";
@@ -22,18 +22,9 @@ import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { FeatureGuard } from "@/components/subscription/FeatureGuard";
 import { QAPanel } from "@/components/qa/QAPanel";
 import { useToast } from "@/hooks/use-toast";
+import { DevPreviewProbe } from "@/dev/DevPreviewProbe";
 
 // ---------- helpers ----------
-const pickGeneratedText = (outputs: any): string => {
-  if (!outputs) return "";
-  return (
-    outputs.resume ??
-    outputs.targetedResume ??
-    outputs.latest ??
-    outputs?.variants?.targeted ??
-    ""
-  );
-};
 const safeWordCount = (s: string) => (s ? (s.match(/\S+/g) || []).length : 0);
 
 // ---------- page ----------
@@ -46,13 +37,10 @@ const ResumeBuilderPage = () => {
   const {
     settings,
     inputs,
-    outputs,
     status,
     updateSettings,
     updateInputs,
     runGeneration,        // must return a string and set outputs.resume (see note at bottom)
-    getWordCount,
-    isOverLimit,
     isReadyToGenerate
   } = useAppDataStore();
 
@@ -60,12 +48,10 @@ const ResumeBuilderPage = () => {
 
   const totalSteps = 5;
 
-  // Local preview guarantees UI updates even if store updates lag or write to a different key
+  const generatedFromStore = useAppDataStore(selectGeneratedResume);
   const [localPreview, setLocalPreview] = useState<string>("");
-
-  // live preview source of truth (local first, then store)
-  const generated = useMemo(() => localPreview || pickGeneratedText(outputs), [localPreview, outputs]);
-  const generatedWords = useMemo(() => safeWordCount(generated), [generated]);
+  const generated = localPreview || generatedFromStore;
+  const generatedWords = useMemo(() => (generated.match(/\S+/g) || []).length, [generated]);
 
   useEffect(() => {
     if (user && currentResumeId) loadVersions(currentResumeId);
@@ -76,12 +62,12 @@ const ResumeBuilderPage = () => {
 
   const handleGenerate = async () => {
     try {
-      const text = await runGeneration();              // expect a string
-      const finalText = typeof text === "string" && text.trim() ? text : pickGeneratedText(outputs);
+      const text = await runGeneration(); // expect a string
+      const finalText = (typeof text === "string" && text.trim()) || generatedFromStore || "";
       if (finalText) {
-        setLocalPreview(finalText);                   // show immediately
+        setLocalPreview(finalText); // show immediately
         toast({ title: "Targeted resume generated", description: "Preview updated" });
-        setCurrentStep(5);                            // jump to review so they see it
+        setCurrentStep(5); // jump to review so they see it
       } else {
         toast({
           title: "Generated but no content detected",
@@ -306,6 +292,8 @@ const ResumeBuilderPage = () => {
                   )}
                 </CardContent>
               </Card>
+
+              <DevPreviewProbe />
 
               {user && (
                 <FeatureGuard feature="version_history">

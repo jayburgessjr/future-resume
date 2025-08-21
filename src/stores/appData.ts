@@ -23,6 +23,14 @@ const extractResume = (res: any): string => {
   return stripComments(String(candidates[0] || ''));
 };
 
+// Resilient selector for generated resume text
+export const selectGeneratedResume = (s: any): string =>
+  s?.outputs?.resume
+  || s?.outputs?.targetedResume
+  || s?.outputs?.latest
+  || s?.outputs?.variants?.targeted
+  || '';
+
 interface AppSettings {
   mode: 'concise' | 'detailed' | 'executive';
   voice: 'first-person' | 'third-person';
@@ -40,21 +48,23 @@ interface AppInputs {
 }
 
 interface AppOutputs {
-  resume: string | null;
-  coverLetter: string;
-  highlights: string[];
-  toolkit: {
+  resume?: string;
+  coverLetter?: string;
+  highlights?: string[];
+  toolkit?: {
     questions: string[];
     followUpEmail: string;
     skillGaps: string[];
   };
-  weeklyKPITracker: string;
-  metadata: {
+  weeklyKPITracker?: string;
+  metadata?: {
     phase: string;
     optimizationScore: number;
     keywordsMatched: number;
     wordCount: number;
   };
+  latest?: string;
+  variants?: { targeted?: string };
 }
 
 interface AppStatus {
@@ -85,7 +95,7 @@ interface AppDataStore {
   // Actions
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   updateInputs: (newInputs: Partial<AppInputs>) => void;
-  runGeneration: () => Promise<void>;
+  runGeneration: () => Promise<string>;
   clearData: () => void;
   loadToolkitIntoBuilder: (toolkitId: string) => Promise<void>;
   
@@ -212,27 +222,28 @@ export const useAppDataStore = create<AppDataStore>()(
           };
 
           const result: ResumeGenerationResult = await generateResumeFlow(params);
-
-          const outputs: AppOutputs = {
-            resume: result.finalResume ?? result.resume,
-            coverLetter: result.coverLetter,
-            highlights: result.recruiterHighlights,
-            toolkit: result.interviewToolkit,
-            weeklyKPITracker: result.weeklyKPITracker,
-            metadata: result.metadata,
-          };
+          const text = extractResume(result);
 
           // Perform Greatness Check and log results (dev-only)
           const qualityResult = performGreatnessCheck(
-            result.finalResume,
+            text,
             state.inputs.jobText,
             state.settings
           );
-          
           logQualityAssessment(qualityResult, 'Resume Generation');
 
           set((currentState) => ({
-            outputs,
+            outputs: {
+              ...(currentState.outputs || {}),
+              resume: text,
+              coverLetter: result.coverLetter,
+              highlights: result.recruiterHighlights,
+              toolkit: result.interviewToolkit,
+              weeklyKPITracker: result.weeklyKPITracker,
+              metadata: result.metadata,
+              latest: text,
+              variants: { ...(currentState.outputs?.variants || {}), targeted: text },
+            },
             loading: false,
             status: {
               hasRun: true,
@@ -245,7 +256,17 @@ export const useAppDataStore = create<AppDataStore>()(
           try {
             await usePersistenceStore.getState().saveDraft(
               state.inputs,
-              outputs,
+              {
+                ...(state.outputs || {}),
+                resume: text,
+                coverLetter: result.coverLetter,
+                highlights: result.recruiterHighlights,
+                toolkit: result.interviewToolkit,
+                weeklyKPITracker: result.weeklyKPITracker,
+                metadata: result.metadata,
+                latest: text,
+                variants: { ...(state.outputs?.variants || {}), targeted: text },
+              },
               state.settings
             );
           } catch (error) {
@@ -253,6 +274,7 @@ export const useAppDataStore = create<AppDataStore>()(
             console.log('Could not save to database:', error);
           }
 
+          return text;
         } catch (error) {
           set((currentState) => ({
             loading: false,

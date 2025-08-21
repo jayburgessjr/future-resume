@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppData } from "@/stores/appData";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -18,20 +17,79 @@ import { StepInterview } from "@/components/flow/StepInterview";
 import { FlowFooter } from "@/components/flow/FlowFooter";
 import { ReviewBar } from "@/components/flow/ReviewBar";
 
-type FlowStep = 'resume' | 'cover-letter' | 'highlights' | 'interview';
+type FlowStep = "resume" | "cover-letter" | "highlights" | "interview";
+const steps: FlowStep[] = ["resume", "cover-letter", "highlights", "interview"];
 
-const steps: FlowStep[] = ['resume', 'cover-letter', 'highlights', 'interview'];
+const safeStep = (s: string | null): FlowStep =>
+  steps.includes(s as FlowStep) ? (s as FlowStep) : "resume";
 
-const BuilderFlowPage = () => {
+/** Minimal modal with ESC/overlay close + body scroll lock. No external UI lib. */
+function InlineModal({
+  open,
+  onClose,
+  title,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+  footer?: ReactNode;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    document.body.classList.add("overflow-hidden");
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (open) {
+      // focus container for accessibility
+      setTimeout(() => boxRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100]">
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        ref={boxRef}
+        tabIndex={-1}
+        className="absolute left-1/2 top-1/2 w-[92vw] max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-xl border bg-background shadow-xl"
+      >
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold">{title}</h2>
+        </div>
+        <div className="max-h-[60vh] overflow-auto p-4">{children}</div>
+        <div className="p-4 border-t flex justify-end gap-2">{footer}</div>
+      </div>
+    </div>
+  );
+}
+
+export default function BuilderFlowPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const ran = useRef(false);
-  
-  const currentStepParam = searchParams.get('step') as FlowStep;
-  const [currentStep, setCurrentStep] = useState<FlowStep>(
-    currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume'
-  );
 
   const {
     settings,
@@ -41,103 +99,136 @@ const BuilderFlowPage = () => {
     getFirstIncompleteStep,
   } = useAppData();
 
-  useEffect(() => {
-    if (ran.current) return;
-    ran.current = true;
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-    const p = new URLSearchParams(window.location.search);
-    if (!p.get('step')) p.set('step', 'resume');
-    const target = `${window.location.pathname}?${p.toString()}`;
-    if (target !== window.location.href) {
-      window.history.replaceState({}, '', target);
+  // Ensure a step param exists (preserve all other params)
+  useEffect(() => {
+    if (!searchParams.get("step")) {
+      const next = new URLSearchParams(searchParams);
+      next.set("step", "resume");
+      setSearchParams(next, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Preload toolkit then clean URL (?toolkit) and set step
   useEffect(() => {
-    // Handle toolkit loading from URL params
-    const toolkitId = searchParams.get('toolkit');
-    if (toolkitId) {
-      loadToolkitIntoBuilder(toolkitId).then(() => {
-        // After loading, determine the appropriate step
-        const firstIncompleteStep = getFirstIncompleteStep();
-        setCurrentStep(firstIncompleteStep);
-        // Clean up URL
-        setSearchParams(
-          { step: firstIncompleteStep },
-          { preserveQuery: true } as any
+    const toolkitId = searchParams.get("toolkit");
+    if (!toolkitId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const maybeStep =
+          (await (loadToolkitIntoBuilder as any)(toolkitId)) as
+            | FlowStep
+            | undefined;
+        const nextStep = safeStep(
+          (maybeStep as string) || getFirstIncompleteStep() || "resume"
         );
-      }).catch((error) => {
-        console.error('Error loading toolkit:', error);
-        // If loading fails, start from the beginning
-        setCurrentStep('resume');
-        setSearchParams(
-          { step: 'resume' },
-          { preserveQuery: true } as any
-        );
-      });
-    } else {
-      // Normal step handling
-      const requestedStep = currentStepParam && steps.includes(currentStepParam) ? currentStepParam : 'resume';
-      setCurrentStep(requestedStep);
-    }
-  }, [searchParams, loadToolkitIntoBuilder, getFirstIncompleteStep, outputs, currentStepParam]);
+        if (cancelled) return;
+        const next = new URLSearchParams(searchParams);
+        next.delete("toolkit");
+        next.set("step", nextStep);
+        setSearchParams(next, { replace: true });
+      } catch (e) {
+        if (cancelled) return;
+        const next = new URLSearchParams(searchParams);
+        next.delete("toolkit");
+        next.set("step", "resume");
+        setSearchParams(next, { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.get("toolkit")]);
 
-  useEffect(() => {
-    // Update URL when step changes (but not during toolkit loading)
-    const toolkitId = searchParams.get('toolkit');
-    if (!toolkitId) {
-      setSearchParams({ step: currentStep }, { preserveQuery: true } as any);
-    }
-  }, [currentStep, setSearchParams, searchParams]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
+  // URL drives current step
+  const currentStep: FlowStep = safeStep(searchParams.get("step"));
   const getCurrentStepIndex = () => steps.indexOf(currentStep);
-  
+
+  // Track resume text and preview flag
+  const resumeText = outputs?.resume?.trim() ?? "";
+  const resumeWords = (resumeText.match(/\S+/g) || []).length;
+  const resumeWithinLimit = resumeText.length > 0 && resumeWords <= 550;
+  const isResumePreviewed = searchParams.get("resumePreviewed") === "1";
+
+  // If resume changes, clear preview flag so user must re-confirm
+  const lastResumeRef = useRef<string>("");
+  useEffect(() => {
+    const txt = outputs?.resume?.trim() ?? "";
+    if (txt !== lastResumeRef.current) {
+      lastResumeRef.current = txt;
+      if (searchParams.get("resumePreviewed") === "1") {
+        const next = new URLSearchParams(searchParams);
+        next.delete("resumePreviewed");
+        setSearchParams(next, { replace: true });
+      }
+    }
+  }, [outputs?.resume, searchParams, setSearchParams]);
+
+  // Gating (require preview confirmation on resume)
   const canProceed = () => {
     switch (currentStep) {
-      case 'resume': {
-        const resumeText = outputs?.resume?.trim() ?? '';
-        const words = (resumeText.match(/\S+/g) || []).length;
-        return resumeText.length > 0 && words <= 550 && !loading;
-      }
-      case 'cover-letter':
+      case "resume":
+        return resumeWithinLimit && isResumePreviewed && !loading;
+      case "cover-letter":
         return !!outputs?.coverLetter && !loading;
-      case 'highlights':
+      case "highlights":
         return !!outputs?.highlights?.length && !loading;
-      case 'interview':
+      case "interview":
         return !!outputs?.toolkit && !loading;
       default:
         return false;
     }
   };
 
-  const handleNext = () => {
-    const currentIndex = getCurrentStepIndex();
-    if (currentIndex < steps.length - 1) {
-      setCurrentStep(steps[currentIndex + 1]);
-    }
+  // URL-preserving navigation helpers
+  const goTo = (step: FlowStep) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("step", step);
+    setSearchParams(next, { replace: true });
   };
 
+  const handleNext = () => {
+    const idx = getCurrentStepIndex();
+    if (idx < steps.length - 1) goTo(steps[idx + 1]);
+  };
   const handleBack = () => {
-    const currentIndex = getCurrentStepIndex();
-    if (currentIndex > 0) {
-      setCurrentStep(steps[currentIndex - 1]);
-    }
+    const idx = getCurrentStepIndex();
+    if (idx > 0) goTo(steps[idx - 1]);
+  };
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  // Resume preview
+  const openResumePreview = () => {
+    if (currentStep !== "resume") return;
+    if (!resumeWithinLimit) return;
+    setIsPreviewOpen(true);
+  };
+  const confirmResumePreview = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set("resumePreviewed", "1");
+    setSearchParams(next, { replace: true });
+    setIsPreviewOpen(false);
+    // Auto-advance
+    const idx = getCurrentStepIndex();
+    if (idx < steps.length - 1) goTo(steps[idx + 1]);
   };
 
   const renderStep = () => {
     switch (currentStep) {
-      case 'resume':
+      case "resume":
         return <StepResume />;
-      case 'cover-letter':
+      case "cover-letter":
         return <StepCoverLetter />;
-      case 'highlights':
+      case "highlights":
         return <StepHighlights />;
-      case 'interview':
+      case "interview":
         return <StepInterview />;
       default:
         return <StepResume />;
@@ -156,17 +247,24 @@ const BuilderFlowPage = () => {
               <p className="text-xs text-muted-foreground">Generate Complete Career Package</p>
             </div>
           </Link>
-          
           <div className="flex items-center space-x-4">
             <ThemeToggle />
             {user ? (
               <div className="flex items-center space-x-3">
                 <SubscriptionBadge />
-                <Badge variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary border-primary/20">
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-1 bg-primary/10 text-primary border-primary/20"
+                >
                   <User className="w-3 h-3" />
-                  {user.email?.split('@')[0]}
+                  {user.email?.split("@")[0]}
                 </Badge>
-                <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="hover:bg-destructive/10 hover:text-destructive"
+                >
                   <LogOut className="w-4 h-4 mr-1" />
                   Sign Out
                 </Button>
@@ -180,32 +278,65 @@ const BuilderFlowPage = () => {
         </div>
       </header>
 
-      {/* Progress Stepper */}
+      {/* Stepper */}
       <div className="border-b border-border/50 bg-background/60 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
-          <Stepper 
-            currentStep={currentStep} 
+          <Stepper
+            currentStep={currentStep}
             steps={steps}
-            onStepClick={(step) => setCurrentStep(step as FlowStep)}
+            onStepClick={(step) => {
+              const target = step as FlowStep;
+              const targetIdx = steps.indexOf(target);
+              const currentIdx = getCurrentStepIndex();
+              if (targetIdx <= currentIdx || canProceed()) {
+                goTo(target);
+              }
+            }}
           />
         </div>
       </div>
 
-      {/* Settings Review Bar */}
+      {/* Settings */}
       <ReviewBar settings={settings} />
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-xl">
-            <CardContent className="p-0">
-              {renderStep()}
-            </CardContent>
+            <CardContent className="p-0">{renderStep()}</CardContent>
           </Card>
+
+          {currentStep === "resume" && (
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Generate your résumé, then preview to continue.
+                {!resumeWithinLimit && (
+                  <span className="ml-2 text-destructive">
+                    Ensure it’s not empty and ≤ 550 words.
+                  </span>
+                )}
+                {resumeWithinLimit && !isResumePreviewed && (
+                  <span className="ml-2">Preview required.</span>
+                )}
+                {isResumePreviewed && (
+                  <span className="ml-2 text-green-600">Preview confirmed.</span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={openResumePreview}
+                  disabled={!resumeWithinLimit || loading}
+                >
+                  Preview Résumé
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
-      {/* Footer Navigation */}
+      {/* Footer */}
       <FlowFooter
         currentStep={currentStep}
         currentStepIndex={getCurrentStepIndex()}
@@ -215,8 +346,32 @@ const BuilderFlowPage = () => {
         onBack={handleBack}
         isLoading={loading}
       />
+
+      {/* Inline Modal (no external lib) */}
+      <InlineModal
+        open={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        title="Preview Résumé"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={confirmResumePreview} disabled={!resumeWithinLimit || loading}>
+              Confirm & Continue
+            </Button>
+          </>
+        }
+      >
+        {resumeText ? (
+          <pre className="whitespace-pre-wrap text-sm leading-relaxed">
+            {resumeText}
+          </pre>
+        ) : (
+          <div className="text-sm text-muted-foreground">No résumé content yet.</div>
+        )}
+        <div className="mt-3 text-xs text-muted-foreground">{resumeWords} words · limit 550</div>
+      </InlineModal>
     </div>
   );
-};
-
-export default BuilderFlowPage;
+}

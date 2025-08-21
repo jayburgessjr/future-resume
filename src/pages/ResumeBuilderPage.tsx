@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,10 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { ArrowLeft, ArrowRight, Upload, FileText, Sparkles, User, LogOut, Settings, PenTool, Building2, Eye, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Sparkles, User, LogOut, Settings, PenTool, Building2, Eye, Target } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDataStore } from "@/stores/appData";
@@ -22,12 +21,27 @@ import { FeatureGuard } from "@/components/subscription/FeatureGuard";
 import { QAPanel } from "@/components/qa/QAPanel";
 import { useToast } from "@/hooks/use-toast";
 
+// ---------- helpers ----------
+const pickGeneratedText = (outputs: any): string => {
+  if (!outputs) return "";
+  return (
+    outputs.resume ??
+    outputs.targetedResume ??
+    outputs.latest ??
+    outputs?.variants?.targeted ??
+    ""
+  );
+};
+
+const safeWordCount = (s: string) => (s ? (s.match(/\S+/g) || []).length : 0);
+
+// ---------- page ----------
 const ResumeBuilderPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const {
     settings,
     inputs,
@@ -44,7 +58,10 @@ const ResumeBuilderPage = () => {
   const { loadVersions, currentResumeId } = usePersistenceStore();
 
   const totalSteps = 5;
-  const progress = (currentStep / totalSteps) * 100;
+
+  // live preview source of truth
+  const generated = useMemo(() => pickGeneratedText(outputs), [outputs]);
+  const generatedWords = useMemo(() => safeWordCount(generated), [generated]);
 
   useEffect(() => {
     if (user && currentResumeId) {
@@ -53,27 +70,35 @@ const ResumeBuilderPage = () => {
   }, [user, currentResumeId, loadVersions]);
 
   const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    }
+    if (currentStep < totalSteps) setCurrentStep((s) => s + 1);
   };
-
   const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep((s) => s - 1);
   };
 
   const handleGenerate = async () => {
     try {
-      await runGeneration();
-      toast({
-        title: "Resume Generated!",
-        description: user ? "Your resume has been generated and saved" : "Your resume has been generated",
-      });
+      // runGeneration should return the generated text. If your current version returns void, update it per the snippet below.
+      const text = await runGeneration();
+      if (typeof text === "string" && text.trim()) {
+        toast({ title: "Targeted resume generated", description: "Preview updated" });
+      } else {
+        // Fallback: if store updated asynchronously, we still refresh the preview from outputs via `generated`
+        if (!generated?.trim()) {
+          toast({
+            title: "Generated but no content detected",
+            description: "Check runGeneration() to ensure it sets outputs.resume",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Targeted resume generated" });
+        }
+      }
+      // jump user to the Review step so they see it immediately
+      setCurrentStep(5);
     } catch (error) {
       toast({
-        title: "Generation Failed",
+        title: "Generation failed",
         description: "Please check your inputs and try again",
         variant: "destructive",
       });
@@ -82,7 +107,7 @@ const ResumeBuilderPage = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate("/");
   };
 
   const renderStep = () => {
@@ -96,7 +121,7 @@ const ResumeBuilderPage = () => {
       case 4:
         return <CompanySignalStep />;
       case 5:
-        return <PreviewStep settings={settings} inputs={inputs} outputs={outputs} />;
+        return <PreviewStep settings={settings} inputs={inputs} outputs={{ resume: generated }} />;
       default:
         return <ConfigurationStep settings={settings} updateSettings={updateSettings} />;
     }
@@ -105,13 +130,13 @@ const ResumeBuilderPage = () => {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return settings.mode && settings.voice && settings.format;
+        return !!settings.mode && !!settings.voice && !!settings.format;
       case 2:
         return inputs.resumeText.trim().length >= 50;
       case 3:
         return inputs.jobText.trim().length >= 50;
       case 4:
-        return true; // Company signal is optional
+        return true; // optional
       case 5:
         return isReadyToGenerate();
       default:
@@ -128,14 +153,14 @@ const ResumeBuilderPage = () => {
             <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
             <div className="relative">
               <FileText className="h-8 w-8 text-accent" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">Resume Builder Pro</h1>
               <p className="text-xs text-muted-foreground">AI-Powered Career Success</p>
             </div>
           </Link>
-          
+
           <div className="flex items-center space-x-4">
             <ThemeToggle />
             {user ? (
@@ -143,7 +168,7 @@ const ResumeBuilderPage = () => {
                 <SubscriptionBadge />
                 <Badge variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary border-primary/20">
                   <User className="w-3 h-3" />
-                  {user.email?.split('@')[0]}
+                  {user.email?.split("@")[0]}
                 </Badge>
                 <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
                   <LogOut className="w-4 h-4 mr-1" />
@@ -166,25 +191,27 @@ const ResumeBuilderPage = () => {
             <div className="flex items-center gap-6">
               {[1, 2, 3, 4, 5].map((step) => (
                 <div key={step} className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
-                    step < currentStep ? 'bg-primary text-white' : 
-                    step === currentStep ? 'bg-accent text-white' : 
-                    'bg-muted text-muted-foreground'
-                  }`}>
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                      step < currentStep
+                        ? "bg-primary text-white"
+                        : step === currentStep
+                        ? "bg-accent text-white"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
                     {step < currentStep ? <Sparkles className="w-4 h-4" /> : step}
                   </div>
                   <div className="hidden lg:block">
-                    <p className={`text-sm font-medium ${step <= currentStep ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    <p className={`text-sm font-medium ${step <= currentStep ? "text-foreground" : "text-muted-foreground"}`}>
                       {getStepTitle(step)}
                     </p>
                   </div>
-                  {step < 5 && <div className="w-8 h-0.5 bg-border mx-2"></div>}
+                  {step < 5 && <div className="w-8 h-0.5 bg-border mx-2" />}
                 </div>
               ))}
             </div>
-            <div className="text-sm text-muted-foreground">
-              Step {currentStep} of {totalSteps}
-            </div>
+            <div className="text-sm text-muted-foreground">Step {currentStep} of {totalSteps}</div>
           </div>
         </div>
       </div>
@@ -203,30 +230,23 @@ const ResumeBuilderPage = () => {
                     </div>
                     <div>
                       <CardTitle className="text-xl">{getStepTitle(currentStep)}</CardTitle>
-                      <CardDescription className="text-base">
-                        {getStepDescription(currentStep)}
-                      </CardDescription>
+                      <CardDescription className="text-base">{getStepDescription(currentStep)}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-8">
                   {renderStep()}
-                  
+
                   {/* Navigation */}
                   <div className="flex justify-between pt-6 border-t border-border/50">
-                    <Button
-                      variant="outline"
-                      onClick={handleBack}
-                      disabled={currentStep === 1}
-                      className="px-6"
-                    >
+                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="px-6">
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Back
                     </Button>
-                    
+
                     {currentStep < totalSteps ? (
-                      <Button 
-                        onClick={handleNext} 
+                      <Button
+                        onClick={handleNext}
                         className="bg-gradient-to-r from-primary to-accent text-white px-6 hover:scale-105 transition-transform"
                         disabled={!canProceed()}
                       >
@@ -234,7 +254,7 @@ const ResumeBuilderPage = () => {
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
                     ) : (
-                      <Button 
+                      <Button
                         className="bg-gradient-to-r from-primary to-accent text-white px-8 hover:scale-105 transition-transform"
                         onClick={handleGenerate}
                         disabled={status.loading || !isReadyToGenerate()}
@@ -250,7 +270,7 @@ const ResumeBuilderPage = () => {
 
             {/* Preview & Tools Section */}
             <div className="lg:col-span-1 space-y-6">
-              {/* Preview */}
+              {/* Live Preview */}
               <Card className="bg-card/50 backdrop-blur-sm border-border/50 sticky top-24">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -259,31 +279,26 @@ const ResumeBuilderPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {outputs?.resume ? (
+                  {generated ? (
                     <div className="space-y-4">
                       <div className="bg-muted/30 rounded-lg p-4 max-h-[300px] overflow-y-auto">
-                        <div className="prose prose-sm max-w-none">
-                          <pre className="whitespace-pre-wrap text-xs leading-relaxed font-sans">
-                            {outputs.resume.slice(0, 500)}...
-                          </pre>
-                        </div>
+                        <pre className="whitespace-pre-wrap text-xs leading-relaxed font-sans">
+                          {generated.length > 1000 ? `${generated.slice(0, 1000)}…` : generated}
+                        </pre>
                         <div className="mt-3 text-xs text-muted-foreground">
-                          Words: {getWordCount(outputs.resume)}/550
-                          {isOverLimit(outputs.resume, 550) && (
-                            <span className="text-destructive ml-2">Over limit!</span>
-                          )}
+                          Words: {generatedWords}/550 {generatedWords > 550 && <span className="text-destructive ml-2">Over limit</span>}
                         </div>
                       </div>
-                      
-                      {/* Export Bar - Protected Feature */}
+
+                      {/* Export Bar - gated */}
                       <FeatureGuard feature="exports">
-                        <ExportBar 
-                          content={outputs.resume}
+                        <ExportBar
+                          content={generated}
                           title="Resume"
                           metadata={{
                             generatedAt: status.lastGenerated,
                             settings,
-                            wordCount: getWordCount(outputs.resume)
+                            wordCount: generatedWords
                           }}
                           className="text-xs"
                         />
@@ -293,16 +308,14 @@ const ResumeBuilderPage = () => {
                     <div className="bg-muted/30 rounded-lg p-6 min-h-[300px] flex items-center justify-center">
                       <div className="text-center space-y-4">
                         <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
-                        <p className="text-sm text-muted-foreground">
-                          Complete the form to see your resume preview
-                        </p>
+                        <p className="text-sm text-muted-foreground">Complete the form to see your resume preview</p>
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Version History Section - Protected Feature */}
+              {/* Version History - gated */}
               {user && (
                 <FeatureGuard feature="version_history">
                   <VersionHistory />
@@ -312,14 +325,14 @@ const ResumeBuilderPage = () => {
           </div>
         </div>
       </main>
-      
-      {/* QA Panel (Development Only) */}
+
+      {/* QA Panel */}
       <QAPanel />
     </div>
   );
 };
 
-// Step Components
+// ----- Step components (unchanged) -----
 const ConfigurationStep = ({ settings, updateSettings }) => {
   return (
     <div className="space-y-6">
@@ -327,9 +340,7 @@ const ConfigurationStep = ({ settings, updateSettings }) => {
         <div className="space-y-2">
           <Label htmlFor="mode">Resume Mode</Label>
           <Select value={settings.mode} onValueChange={(value) => updateSettings({ mode: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select resume mode" />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Select resume mode" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="concise">Concise (≤350 words)</SelectItem>
               <SelectItem value="detailed">Detailed (≤550 words)</SelectItem>
@@ -341,12 +352,10 @@ const ConfigurationStep = ({ settings, updateSettings }) => {
         <div className="space-y-2">
           <Label htmlFor="voice">Voice Style</Label>
           <Select value={settings.voice} onValueChange={(value) => updateSettings({ voice: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select voice style" />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Select voice style" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="first-person">First Person (I, my, me)</SelectItem>
-              <SelectItem value="third-person">Third Person (they, their)</SelectItem>
+              <SelectItem value="first-person">First Person</SelectItem>
+              <SelectItem value="third-person">Third Person</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -354,9 +363,7 @@ const ConfigurationStep = ({ settings, updateSettings }) => {
         <div className="space-y-2">
           <Label htmlFor="format">Output Format</Label>
           <Select value={settings.format} onValueChange={(value) => updateSettings({ format: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select output format" />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Select output format" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="markdown">Markdown</SelectItem>
               <SelectItem value="plain_text">Plain Text</SelectItem>
@@ -372,10 +379,7 @@ const ConfigurationStep = ({ settings, updateSettings }) => {
             <Label htmlFor="include-table">Include Skills Table</Label>
             <p className="text-sm text-muted-foreground">Add a structured skills section</p>
           </div>
-          <Switch
-            checked={settings.includeTable}
-            onCheckedChange={(checked) => updateSettings({ includeTable: checked })}
-          />
+          <Switch checked={settings.includeTable} onCheckedChange={(checked) => updateSettings({ includeTable: checked })} />
         </div>
 
         <div className="flex items-center justify-between">
@@ -383,163 +387,123 @@ const ConfigurationStep = ({ settings, updateSettings }) => {
             <Label htmlFor="proofread">AI Proofreading</Label>
             <p className="text-sm text-muted-foreground">Enhance grammar and clarity</p>
           </div>
-          <Switch
-            checked={settings.proofread}
-            onCheckedChange={(checked) => updateSettings({ proofread: checked })}
-          />
+          <Switch checked={settings.proofread} onCheckedChange={(checked) => updateSettings({ proofread: checked })} />
         </div>
       </div>
     </div>
   );
 };
 
-const ResumeInputStep = ({ inputs, updateInputs }) => {
-  return (
+const ResumeInputStep = ({ inputs, updateInputs }) => (
+  <div className="space-y-6">
+    <div className="space-y-2">
+      <Label htmlFor="manual-entry">Resume Content</Label>
+      <Textarea
+        id="manual-entry"
+        placeholder="Paste your current resume content here or start typing..."
+        value={inputs.resumeText}
+        onChange={(e) => updateInputs({ resumeText: e.target.value })}
+        className="min-h-[300px]"
+      />
+      <p className="text-sm text-muted-foreground">{inputs.resumeText.length} characters (minimum 50 required)</p>
+    </div>
+  </div>
+);
+
+const JobDescriptionStep = ({ inputs, updateInputs }) => (
+  <div className="space-y-8">
+    <div className="text-center space-y-4">
+      <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto">
+        <FileText className="h-8 w-8 text-white" />
+      </div>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Job Requirements</h2>
+        <p className="text-muted-foreground">Paste the job description to tailor your resume</p>
+      </div>
+    </div>
+
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="manual-entry">Resume Content</Label>
+      <div className="space-y-3">
+        <Label htmlFor="job-description" className="text-base font-medium">Target Job Description</Label>
         <Textarea
-          id="manual-entry"
-          placeholder="Paste your current resume content here or start typing..."
-          value={inputs.resumeText}
-          onChange={(e) => updateInputs({ resumeText: e.target.value })}
-          className="min-h-[300px]"
+          id="job-description"
+          placeholder="Paste the complete job description here."
+          value={inputs.jobText}
+          onChange={(e) => updateInputs({ jobText: e.target.value })}
+          className="min-h-[200px] text-base"
         />
-        <p className="text-sm text-muted-foreground">
-          {inputs.resumeText.length} characters (minimum 50 required)
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const JobDescriptionStep = ({ inputs, updateInputs }) => {
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto">
-          <FileText className="h-8 w-8 text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Job Requirements</h2>
-          <p className="text-muted-foreground">Paste the job description to tailor your resume</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">{inputs.jobText.length} characters (minimum 50 required)</p>
+          <Badge variant={inputs.jobText.length >= 50 ? "default" : "outline"}>
+            {inputs.jobText.length >= 50 ? "Ready" : "Needs more"}
+          </Badge>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <Label htmlFor="job-description" className="text-base font-medium">
-            Target Job Description
-          </Label>
-          <Textarea
-            id="job-description"
-            placeholder="Paste the complete job description here. Include:
-• Job title and responsibilities
-• Required skills and qualifications
-• Preferred experience
-• Company information
-• Benefits and culture details"
-            value={inputs.jobText}
-            onChange={(e) => updateInputs({ jobText: e.target.value })}
-            className="min-h-[200px] text-base"
-          />
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {inputs.jobText.length} characters (minimum 50 required)
-            </p>
-            <Badge variant={inputs.jobText.length >= 50 ? "default" : "outline"}>
-              {inputs.jobText.length >= 50 ? "✓ Ready" : "Needs more"}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Tips */}
-        <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Target className="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-medium text-sm mb-1">Pro Tip</h4>
-                <p className="text-xs text-muted-foreground">
-                  Include the complete job description for best results. Our AI will extract key requirements and optimize your resume accordingly.
-                </p>
-              </div>
+      <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Target className="w-4 h-4 text-primary" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div>
+              <h4 className="font-medium text-sm mb-1">Pro Tip</h4>
+              <p className="text-xs text-muted-foreground">
+                Include the complete job description for best results. The AI will extract key requirements and optimize your resume accordingly.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  );
-};
+  </div>
+);
 
-const PreviewStep = ({ settings, inputs, outputs }) => {
+const PreviewStep = ({ settings, outputs }) => {
+  const text = outputs?.resume ?? "";
   return (
     <div className="space-y-6">
       <div className="bg-muted/30 rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4">Configuration Summary</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-muted-foreground">Mode:</span>
-            <span className="ml-2 font-medium capitalize">{settings.mode || "Not set"}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Voice:</span>
-            <span className="ml-2 font-medium capitalize">{settings.voice || "Not set"}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Format:</span>
-            <span className="ml-2 font-medium capitalize">{settings.format || "Not set"}</span>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Skills Table:</span>
-            <span className="ml-2 font-medium">{settings.includeTable ? "Yes" : "No"}</span>
-          </div>
+          <div><span className="text-muted-foreground">Mode:</span><span className="ml-2 font-medium capitalize">{settings.mode || "Not set"}</span></div>
+          <div><span className="text-muted-foreground">Voice:</span><span className="ml-2 font-medium capitalize">{settings.voice || "Not set"}</span></div>
+          <div><span className="text-muted-foreground">Format:</span><span className="ml-2 font-medium capitalize">{settings.format || "Not set"}</span></div>
+          <div><span className="text-muted-foreground">Skills Table:</span><span className="ml-2 font-medium">{settings.includeTable ? "Yes" : "No"}</span></div>
         </div>
       </div>
 
-      {!outputs?.resume ? (
+      {!text ? (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Ready to Generate!</h3>
-          <p className="text-muted-foreground">
-            Your resume will be generated based on your configuration and inputs.
-            {outputs ? " Your previous resume will be updated." : ""}
-          </p>
+          <h3 className="text-lg font-semibold">Ready to Generate</h3>
+          <p className="text-muted-foreground">Your resume will be generated based on your configuration and inputs.</p>
         </div>
       ) : (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Generated Resume</h3>
           <div className="bg-background rounded-lg p-4 max-h-[400px] overflow-y-auto">
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
-              {outputs.resume}
-            </pre>
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">{text}</pre>
           </div>
-          <ExportBar
-            content={outputs.resume}
-            title="Resume"
-            metadata={{ wordCount: outputs.resume.split(/\s+/).filter(w => w).length }}
-            className="text-xs"
-          />
+          <FeatureGuard feature="exports">
+            <ExportBar content={text} title="Resume" metadata={{ wordCount: safeWordCount(text) }} className="text-xs" />
+          </FeatureGuard>
         </div>
       )}
     </div>
   );
 };
 
-// Helper Functions
+// helpers for labels/icons
 const getStepTitle = (step: number) => {
   switch (step) {
     case 1: return "Configuration";
     case 2: return "Resume Input";
     case 3: return "Job Description";
     case 4: return "Company Intelligence";
-    case 5: return "Review & Generate";
+    case 5: return "Review and Generate";
     default: return "Configuration";
   }
 };
-
 const getStepDescription = (step: number) => {
   switch (step) {
     case 1: return "Choose how you want your resume formatted and styled";
@@ -550,7 +514,6 @@ const getStepDescription = (step: number) => {
     default: return "Configuration settings";
   }
 };
-
 const getStepIcon = (step: number) => {
   switch (step) {
     case 1: return <Settings className="h-5 w-5 text-white" />;

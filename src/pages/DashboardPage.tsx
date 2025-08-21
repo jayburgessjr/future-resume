@@ -21,7 +21,7 @@ import {
   type Job, 
   type Resume 
 } from "@/stores/dashboardStore";
-import { useAppDataStore, useAppData } from "@/stores/appData";
+import { useAppDataStore } from "@/stores";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -396,7 +396,7 @@ const DashboardPage = () => {
                 }}
                 onGenerateTargeted={() => {
                   const selectedJD = jobs[0];
-                  useAppData.getState().hydrateFromDashboard({
+                  useAppDataStore.getState().hydrateFromDashboard({
                     resumeText: (masterResume ?? '').toString(),
                     jobText:
                       selectedJD?.description ??

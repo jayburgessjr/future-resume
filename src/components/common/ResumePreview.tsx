@@ -1,6 +1,7 @@
 "use client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAppData } from "@/stores/appData";
+import { useAppDataStore } from "@/stores";
+import { useGeneratedResume } from "@/hooks/useGeneratedResume";
 
 const SkeletonLines = ({ lines }: { lines: number }) => (
   <div className="space-y-2">
@@ -11,13 +12,13 @@ const SkeletonLines = ({ lines }: { lines: number }) => (
 );
 
 export const ResumePreview = () => {
-  const inputs = useAppData(s => s.inputs);
-  const outputs = useAppData(s => s.outputs);
-  const loading = useAppData(s => s.loading);
+  const inputs = useAppDataStore((s) => s.inputs);
+  const loading = useAppDataStore((s) => s.status.loading);
+  const { generated } = useGeneratedResume();
 
   if (loading) return <SkeletonLines lines={6} />;
 
-  const txt = outputs?.resume?.trim() || '';
+  const txt = generated.trim();
   if (txt) {
     return (
       <div className="space-y-4">

@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { generateResumeFlow, ResumeGenerationParams, ResumeGenerationResult } from '@/lib/resumeService';
-import { usePersistenceStore } from './persistenceStore';
-import { performGreatnessCheck, logQualityAssessment } from '@/lib/qualityCheck';
 import { supabase } from '@/integrations/supabase/client';
 
 const stripComments = (s?: string) =>
@@ -22,6 +20,8 @@ const extractResume = (res: any): string => {
   ].filter(Boolean);
   return stripComments(String(candidates[0] || ''));
 };
+
+let genToken = 0;
 
 // Resilient selector for generated resume text
 export const selectGeneratedResume = (s: any): string =>
@@ -202,85 +202,41 @@ export const useAppDataStore = create<AppDataStore>()(
       },
 
       runGeneration: async () => {
-        const state = get();
+        const token = ++genToken;
+        const { inputs, settings } = get();
 
-        if (!state.isReadyToGenerate()) {
-          throw new Error('Missing required inputs');
-        }
-
-        set((currentState) => ({
-          loading: true,
-          status: { ...currentState.status, loading: true },
-        }));
+        set((s) => ({ status: { ...s.status, loading: true } }));
 
         try {
-          const params: ResumeGenerationParams = {
-            ...state.settings,
-            resumeContent: state.inputs.resumeText,
-            jobDescription: state.inputs.jobText,
-            manualEntry: state.inputs.companySignal,
-          };
+          // Keep your existing API call; just map the result to a string
+          const result: ResumeGenerationResult = await generateResumeFlow({
+            ...settings,
+            resumeContent: inputs.resumeText,
+            jobDescription: inputs.jobText,
+            manualEntry: inputs.companySignal,
+          });
+          const textRaw = extractResume(result);
+          const text = String(textRaw ?? "").trim();
 
-          const result: ResumeGenerationResult = await generateResumeFlow(params);
-          const text = extractResume(result);
+          // If another generation started after this one, drop this result
+          if (token !== genToken) return text;
 
-          // Perform Greatness Check and log results (dev-only)
-          const qualityResult = performGreatnessCheck(
-            text,
-            state.inputs.jobText,
-            state.settings
-          );
-          logQualityAssessment(qualityResult, 'Resume Generation');
-
-          set((currentState) => ({
+          set((s) => ({
             outputs: {
-              ...(currentState.outputs || {}),
-              resume: text,
-              coverLetter: result.coverLetter,
-              highlights: result.recruiterHighlights,
-              toolkit: result.interviewToolkit,
-              weeklyKPITracker: result.weeklyKPITracker,
-              metadata: result.metadata,
+              ...s.outputs,
+              resume: text, // canonical preview key
               latest: text,
-              variants: { ...(currentState.outputs?.variants || {}), targeted: text },
+              variants: { ...(s.outputs?.variants || {}), targeted: text },
             },
-            loading: false,
-            status: {
-              hasRun: true,
-              loading: false,
-              lastGenerated: new Date(),
-            },
+            status: { ...s.status, loading: false, lastGenerated: new Date(), hasRun: true },
           }));
-
-          // Save to database if user is authenticated
-          try {
-            await usePersistenceStore.getState().saveDraft(
-              state.inputs,
-              {
-                ...(state.outputs || {}),
-                resume: text,
-                coverLetter: result.coverLetter,
-                highlights: result.recruiterHighlights,
-                toolkit: result.interviewToolkit,
-                weeklyKPITracker: result.weeklyKPITracker,
-                metadata: result.metadata,
-                latest: text,
-                variants: { ...(state.outputs?.variants || {}), targeted: text },
-              },
-              state.settings
-            );
-          } catch (error) {
-            // Continue even if save fails (user might not be logged in)
-            console.log('Could not save to database:', error);
-          }
 
           return text;
-        } catch (error) {
-          set((currentState) => ({
-            loading: false,
-            status: { ...currentState.status, loading: false },
-          }));
-          throw error;
+        } catch (e) {
+          if (token === genToken) {
+            set((s) => ({ status: { ...s.status, loading: false } }));
+          }
+          throw e;
         }
       },
 

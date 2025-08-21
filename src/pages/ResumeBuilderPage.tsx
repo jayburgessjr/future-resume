@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 // If your store is named useAppData, change this import to: import { useAppData } from "@/stores/appData";
 import { useAppDataStore, selectGeneratedResume } from "@/stores/appData";
+import shallow from "zustand/shallow";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
 import { ExportBar } from "@/components/export/ExportBar";
@@ -37,21 +38,24 @@ const ResumeBuilderPage = () => {
   const {
     settings,
     inputs,
-    status,
     updateSettings,
     updateInputs,
     runGeneration,        // must return a string and set outputs.resume (see note at bottom)
     isReadyToGenerate
   } = useAppDataStore();
 
+  const loading = useAppDataStore((s) => s.status.loading, shallow);
+  const lastGenerated = useAppDataStore((s) => s.status.lastGenerated);
+
   const { loadVersions, currentResumeId } = usePersistenceStore();
 
   const totalSteps = 5;
 
-  const generatedFromStore = useAppDataStore(selectGeneratedResume);
+  const generated = useAppDataStore(selectGeneratedResume);
   const [localPreview, setLocalPreview] = useState<string>("");
-  const generated = localPreview || generatedFromStore;
-  const generatedWords = useMemo(() => (generated.match(/\S+/g) || []).length, [generated]);
+  const previewText = localPreview || generated;
+  const wordCount = useMemo(() => (generated.match(/\S+/g) || []).length, [generated]);
+  const overLimit = wordCount > 550;
 
   useEffect(() => {
     if (user && currentResumeId) loadVersions(currentResumeId);
@@ -63,7 +67,7 @@ const ResumeBuilderPage = () => {
   const handleGenerate = async () => {
     try {
       const text = await runGeneration(); // expect a string
-      const finalText = (typeof text === "string" && text.trim()) || generatedFromStore || "";
+      const finalText = (typeof text === "string" && text.trim()) || generated || "";
       if (finalText) {
         setLocalPreview(finalText); // show immediately
         toast({ title: "Targeted resume generated", description: "Preview updated" });
@@ -101,13 +105,16 @@ const ResumeBuilderPage = () => {
         return <CompanySignalStep />;
       case 5:
         // Inject the resolved generated text so Preview always shows
-        return <PreviewStep settings={settings} outputs={{ resume: generated }} />;
+        return <PreviewStep settings={settings} outputs={{ resume: previewText }} />;
       default:
         return <ConfigurationStep settings={settings} updateSettings={updateSettings} />;
     }
   };
 
   const canProceed = () => {
+    if (currentStep === 5) {
+      return !!generated && !loading; // review & generate step
+    }
     switch (currentStep) {
       case 1:
         return !!settings.mode && !!settings.voice && !!settings.format;
@@ -117,8 +124,6 @@ const ResumeBuilderPage = () => {
         return inputs.jobText.trim().length >= 50;
       case 4:
         return true; // optional
-      case 5:
-        return isReadyToGenerate();
       default:
         return true;
     }
@@ -237,9 +242,9 @@ const ResumeBuilderPage = () => {
                       <Button
                         className="bg-gradient-to-r from-primary to-accent text-white px-8 hover:scale-105 transition-transform"
                         onClick={handleGenerate}
-                        disabled={status.loading || !isReadyToGenerate()}
+                        disabled={loading || !isReadyToGenerate()}
                       >
-                        {status.loading ? "Generating..." : "Generate Resume"}
+                        {loading ? "Generating..." : "Generate Resume"}
                         <Sparkles className="ml-2 h-4 w-4" />
                       </Button>
                     )}
@@ -258,25 +263,25 @@ const ResumeBuilderPage = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {generated ? (
+                  {previewText ? (
                     <div className="space-y-4">
                       <div className="bg-muted/30 rounded-lg p-4 max-h-[300px] overflow-y-auto">
                         <pre className="whitespace-pre-wrap text-xs leading-relaxed font-sans">
-                          {generated.length > 1000 ? `${generated.slice(0, 1000)}…` : generated}
+                          {previewText.length > 1000 ? `${previewText.slice(0, 1000)}…` : previewText}
                         </pre>
                         <div className="mt-3 text-xs text-muted-foreground">
-                          Words: {generatedWords}/550 {generatedWords > 550 && <span className="text-destructive ml-2">Over limit</span>}
+                          Words: {wordCount}/550 {overLimit && <span className="text-destructive ml-2">Over limit</span>}
                         </div>
                       </div>
 
                       <FeatureGuard feature="exports">
                         <ExportBar
-                          content={generated}
+                          content={previewText}
                           title="Resume"
                           metadata={{
-                            generatedAt: status.lastGenerated,
+                            generatedAt: lastGenerated,
                             settings,
-                            wordCount: generatedWords
+                            wordCount: wordCount
                           }}
                           className="text-xs"
                         />
@@ -293,7 +298,7 @@ const ResumeBuilderPage = () => {
                 </CardContent>
               </Card>
 
-              <DevPreviewProbe />
+              {process.env.NODE_ENV !== "production" && <DevPreviewProbe />}
 
               {user && (
                 <FeatureGuard feature="version_history">

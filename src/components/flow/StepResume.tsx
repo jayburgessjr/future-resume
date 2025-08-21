@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Sparkles, AlertCircle } from "lucide-react";
-import { useAppData } from "@/stores/appData";
+import { useAppDataStore } from "@/stores";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { useToast } from "@/hooks/use-toast";
 import { ResumePreview } from "@/components/common/ResumePreview";
@@ -24,7 +24,7 @@ export const StepResume = () => {
     updateInputs,
     generateResume,
     loading
-  } = useAppData();
+  } = useAppDataStore();
   const { toast } = useToast();
 
   // Handle autostart generation when component mounts

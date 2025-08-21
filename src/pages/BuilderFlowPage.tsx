@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAppData } from "@/stores/appData";
+import { useAppDataStore } from "@/stores";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { Badge } from "@/components/ui/badge";
@@ -97,7 +97,7 @@ export default function BuilderFlowPage() {
     loading,
     loadToolkitIntoBuilder,
     getFirstIncompleteStep,
-  } = useAppData();
+  } = useAppDataStore();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 

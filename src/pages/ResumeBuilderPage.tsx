@@ -1,7 +1,8 @@
+// app/pages/ResumeBuilderPage.tsx
+"use client";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ArrowLeft, ArrowRight, FileText, Sparkles, User, LogOut, Settings, PenTool, Building2, Eye, Target } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+// If your store is named useAppData, change this import to: import { useAppData } from "@/stores/appData";
 import { useAppDataStore } from "@/stores/appData";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import { VersionHistory } from "@/components/resume/VersionHistory";
@@ -32,7 +34,6 @@ const pickGeneratedText = (outputs: any): string => {
     ""
   );
 };
-
 const safeWordCount = (s: string) => (s ? (s.match(/\S+/g) || []).length : 0);
 
 // ---------- page ----------
@@ -49,7 +50,7 @@ const ResumeBuilderPage = () => {
     status,
     updateSettings,
     updateInputs,
-    runGeneration,
+    runGeneration,        // must return a string and set outputs.resume (see note at bottom)
     getWordCount,
     isOverLimit,
     isReadyToGenerate
@@ -59,43 +60,35 @@ const ResumeBuilderPage = () => {
 
   const totalSteps = 5;
 
-  // live preview source of truth
-  const generated = useMemo(() => pickGeneratedText(outputs), [outputs]);
+  // Local preview guarantees UI updates even if store updates lag or write to a different key
+  const [localPreview, setLocalPreview] = useState<string>("");
+
+  // live preview source of truth (local first, then store)
+  const generated = useMemo(() => localPreview || pickGeneratedText(outputs), [localPreview, outputs]);
   const generatedWords = useMemo(() => safeWordCount(generated), [generated]);
 
   useEffect(() => {
-    if (user && currentResumeId) {
-      loadVersions(currentResumeId);
-    }
+    if (user && currentResumeId) loadVersions(currentResumeId);
   }, [user, currentResumeId, loadVersions]);
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) setCurrentStep((s) => s + 1);
-  };
-  const handleBack = () => {
-    if (currentStep > 1) setCurrentStep((s) => s - 1);
-  };
+  const handleNext = () => { if (currentStep < totalSteps) setCurrentStep((s) => s + 1); };
+  const handleBack = () => { if (currentStep > 1) setCurrentStep((s) => s - 1); };
 
   const handleGenerate = async () => {
     try {
-      // runGeneration should return the generated text. If your current version returns void, update it per the snippet below.
-      const text = await runGeneration();
-      if (typeof text === "string" && text.trim()) {
+      const text = await runGeneration();              // expect a string
+      const finalText = typeof text === "string" && text.trim() ? text : pickGeneratedText(outputs);
+      if (finalText) {
+        setLocalPreview(finalText);                   // show immediately
         toast({ title: "Targeted resume generated", description: "Preview updated" });
+        setCurrentStep(5);                            // jump to review so they see it
       } else {
-        // Fallback: if store updated asynchronously, we still refresh the preview from outputs via `generated`
-        if (!generated?.trim()) {
-          toast({
-            title: "Generated but no content detected",
-            description: "Check runGeneration() to ensure it sets outputs.resume",
-            variant: "destructive",
-          });
-        } else {
-          toast({ title: "Targeted resume generated" });
-        }
+        toast({
+          title: "Generated but no content detected",
+          description: "Ensure runGeneration() returns a string and sets outputs.resume",
+          variant: "destructive",
+        });
       }
-      // jump user to the Review step so they see it immediately
-      setCurrentStep(5);
     } catch (error) {
       toast({
         title: "Generation failed",
@@ -121,7 +114,8 @@ const ResumeBuilderPage = () => {
       case 4:
         return <CompanySignalStep />;
       case 5:
-        return <PreviewStep settings={settings} inputs={inputs} outputs={{ resume: generated }} />;
+        // Inject the resolved generated text so Preview always shows
+        return <PreviewStep settings={settings} outputs={{ resume: generated }} />;
       default:
         return <ConfigurationStep settings={settings} updateSettings={updateSettings} />;
     }
@@ -184,7 +178,7 @@ const ResumeBuilderPage = () => {
         </div>
       </header>
 
-      {/* Progress Section */}
+      {/* Progress */}
       <div className="border-b border-border/50 bg-background/60 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -216,11 +210,11 @@ const ResumeBuilderPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Form Section */}
+            {/* Form */}
             <div className="lg:col-span-2">
               <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-xl">
                 <CardHeader className="pb-6">
@@ -237,7 +231,7 @@ const ResumeBuilderPage = () => {
                 <CardContent className="space-y-8">
                   {renderStep()}
 
-                  {/* Navigation */}
+                  {/* Nav */}
                   <div className="flex justify-between pt-6 border-t border-border/50">
                     <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="px-6">
                       <ArrowLeft className="mr-2 h-4 w-4" />
@@ -268,9 +262,8 @@ const ResumeBuilderPage = () => {
               </Card>
             </div>
 
-            {/* Preview & Tools Section */}
+            {/* Preview + Tools */}
             <div className="lg:col-span-1 space-y-6">
-              {/* Live Preview */}
               <Card className="bg-card/50 backdrop-blur-sm border-border/50 sticky top-24">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -290,7 +283,6 @@ const ResumeBuilderPage = () => {
                         </div>
                       </div>
 
-                      {/* Export Bar - gated */}
                       <FeatureGuard feature="exports">
                         <ExportBar
                           content={generated}
@@ -308,14 +300,13 @@ const ResumeBuilderPage = () => {
                     <div className="bg-muted/30 rounded-lg p-6 min-h-[300px] flex items-center justify-center">
                       <div className="text-center space-y-4">
                         <FileText className="h-12 w-12 text-muted-foreground mx-auto" />
-                        <p className="text-sm text-muted-foreground">Complete the form to see your resume preview</p>
+                        <p className="text-sm text-muted-foreground">Resume ready to generate — click Generate.</p>
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Version History - gated */}
               {user && (
                 <FeatureGuard feature="version_history">
                   <VersionHistory />
@@ -326,13 +317,12 @@ const ResumeBuilderPage = () => {
         </div>
       </main>
 
-      {/* QA Panel */}
       <QAPanel />
     </div>
   );
 };
 
-// ----- Step components (unchanged) -----
+// ----- Step components -----
 const ConfigurationStep = ({ settings, updateSettings }) => {
   return (
     <div className="space-y-6">
@@ -526,3 +516,24 @@ const getStepIcon = (step: number) => {
 };
 
 export default ResumeBuilderPage;
+
+/**
+ * NOTE FOR YOUR STORE (do this once; not part of this page at runtime)
+ *
+ * Ensure runGeneration returns a string and writes to outputs.resume immutably.
+ *
+ *   runGeneration: async () => {
+ *     set(s => ({ status: { ...s.status, loading: true } }));
+ *     try {
+ *       const text = await apiGenerate(/* your backend call * /);
+ *       set(s => ({
+ *         outputs: { ...s.outputs, resume: text, latest: text, variants: { targeted: text } },
+ *         status: { loading: false, lastGenerated: new Date().toISOString() },
+ *       }));
+ *       return text; // critical for instant preview
+ *     } catch (e) {
+ *       set(s => ({ status: { ...s.status, loading: false } }));
+ *       throw e;
+ *     }
+ *   }
+ */

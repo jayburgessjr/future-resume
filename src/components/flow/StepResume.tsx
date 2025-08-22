@@ -60,6 +60,7 @@ export const StepResume = () => {
     }
 
     try {
+      console.log('Starting resume generation from StepResume...');
       await generateResume();
       toast({
         title: "Resume Generated!",
@@ -69,7 +70,7 @@ export const StepResume = () => {
       console.error('Resume generation error:', error);
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Please check your inputs and try again.",
+        description: error instanceof Error ? error.message : "Please check your inputs and connection, then try again.",
         variant: "destructive",
       });
     }

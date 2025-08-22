@@ -12,8 +12,8 @@ const SkeletonLines = ({ lines }: { lines: number }) => (
 );
 
 export const ResumePreview = () => {
-  const inputs = useAppDataStore((s) => s.inputs);
-  const loading = useAppDataStore((s) => s.status.loading);
+  const { inputs, status, outputs } = useAppDataStore();
+  const loading = status.loading;
   const { generated } = useGeneratedResume();
 
   if (loading) return <SkeletonLines lines={6} />;

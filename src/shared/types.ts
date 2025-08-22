@@ -25,7 +25,7 @@ export type Outputs = {
   coverLetter?: string;
   highlights?: string[];
   toolkit?: unknown;
-};
+} | null;
 
 export type Status = {
   loading: boolean;

@@ -71,6 +71,12 @@ export const useAppDataStore = create<AppDataStore>()(
     set((s) => ({ status: { ...s.status, loading: true } }));
     
     try {
+      console.log('Starting resume generation with inputs:', {
+        resumeLength: inputs.resumeText.length,
+        jobLength: inputs.jobText.length,
+        settings
+      });
+
       const result = await generateResumeFlow({
         mode: settings.mode || "detailed",
         voice: settings.voice || "first-person",
@@ -83,6 +89,8 @@ export const useAppDataStore = create<AppDataStore>()(
       });
 
       if (token !== genToken) return result.finalResume; // Drop stale result
+
+      console.log('Resume generation completed successfully');
 
       // Update state with complete results
       set((s) => ({
@@ -105,6 +113,7 @@ export const useAppDataStore = create<AppDataStore>()(
 
       return result.finalResume;
     } catch (e) {
+      console.error('Resume generation failed:', e);
       if (token === genToken) {
         set((s) => ({ 
           status: { ...s.status, loading: false }
@@ -143,7 +152,7 @@ export const useAppDataStore = create<AppDataStore>()(
         companyName: "",
         companyUrl: ""
       },
-      outputs: {}, // Reset outputs to trigger fresh generation
+      outputs: null, // Reset outputs to trigger fresh generation
       status: { loading: false }
     });
   },

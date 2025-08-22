@@ -9,6 +9,9 @@ export type Settings = {
 export type Inputs = {
   resumeText: string;
   jobText: string;
+  companySignal?: string;
+  companyName?: string;
+  companyUrl?: string;
 };
 
 export type Outputs = {

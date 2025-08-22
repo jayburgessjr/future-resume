@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, Loader2 } from "lucide-react";
 import { SaveToolkitButton } from "./SaveToolkitButton";
 
 interface FlowFooterProps {
@@ -49,8 +49,17 @@ export const FlowFooter = ({
                 disabled={!canProceed || isLoading}
                 className="bg-gradient-to-r from-primary to-accent text-white px-6 hover:scale-105 transition-transform"
               >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Continue
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
             )}
           </div>

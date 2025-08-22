@@ -94,21 +94,9 @@ export default function BuilderFlowPage() {
   const {
     settings,
     outputs,
-    loading,
+    status,
     loadToolkitIntoBuilder,
-    getFirstIncompleteStep,
-  } = useAppDataStore();
-
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  // Ensure a step param exists (preserve all other params)
-  useEffect(() => {
-    if (!searchParams.get("step")) {
-      const next = new URLSearchParams(searchParams);
-      next.set("step", "resume");
-      setSearchParams(next, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Remove auto-generation from this component - let StepResume handle it
   }, []);
 
   // Preload toolkit then clean URL (?toolkit) and set step
@@ -172,13 +160,13 @@ export default function BuilderFlowPage() {
   const canProceed = () => {
     switch (currentStep) {
       case "resume":
-        return resumeWithinLimit && isResumePreviewed && !loading;
+        return resumeWithinLimit && isResumePreviewed && !status.loading;
       case "cover-letter":
-        return !!outputs?.coverLetter && !loading;
+        return !!outputs?.coverLetter && !status.loading;
       case "highlights":
-        return !!outputs?.highlights?.length && !loading;
+        return !!outputs?.highlights?.length && !status.loading;
       case "interview":
-        return !!outputs?.toolkit && !loading;
+        return !!outputs?.toolkit && !status.loading;
       default:
         return false;
     }
@@ -326,7 +314,7 @@ export default function BuilderFlowPage() {
                 <Button
                   variant="outline"
                   onClick={openResumePreview}
-                  disabled={!resumeWithinLimit || loading}
+                  disabled={!resumeWithinLimit || status.loading}
                 >
                   Preview Résumé
                 </Button>
@@ -344,7 +332,7 @@ export default function BuilderFlowPage() {
         canProceed={canProceed()}
         onNext={handleNext}
         onBack={handleBack}
-        isLoading={loading}
+        isLoading={status.loading}
       />
 
       {/* Inline Modal (no external lib) */}
@@ -357,7 +345,7 @@ export default function BuilderFlowPage() {
             <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
               Close
             </Button>
-            <Button onClick={confirmResumePreview} disabled={!resumeWithinLimit || loading}>
+            <Button onClick={confirmResumePreview} disabled={!resumeWithinLimit || status.loading}>
               Confirm & Continue
             </Button>
           </>

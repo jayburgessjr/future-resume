@@ -90,6 +90,7 @@ export default function BuilderFlowPage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const {
     settings,
@@ -97,7 +98,15 @@ export default function BuilderFlowPage() {
     status,
     loadToolkitIntoBuilder,
     // Remove auto-generation from this component - let StepResume handle it
-  }, []);
+  } = useAppDataStore();
+
+  const getFirstIncompleteStep = () => {
+    if (!outputs?.resume) return "resume";
+    if (!outputs?.coverLetter) return "cover-letter";
+    if (!outputs?.highlights?.length) return "highlights";
+    if (!outputs?.toolkit) return "interview";
+    return null;
+  };
 
   // Preload toolkit then clean URL (?toolkit) and set step
   useEffect(() => {
@@ -300,7 +309,7 @@ export default function BuilderFlowPage() {
                 Generate your résumé, then preview to continue.
                 {!resumeWithinLimit && (
                   <span className="ml-2 text-destructive">
-                    Ensure it’s not empty and ≤ 550 words.
+                    Ensure it's not empty and ≤ 550 words.
                   </span>
                 )}
                 {resumeWithinLimit && !isResumePreviewed && (

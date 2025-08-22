@@ -34,12 +34,16 @@ type AppDataStore = {
 
 let genToken = 0;
 
-    mode: "detailed",
-    voice: "first-person",
 export const useAppDataStore = create<AppDataStore>()(
   persist(
     (set, get) => ({
-  settings: { format: "plain_text", includeTable: false, proofread: true },
+  settings: { 
+    format: "plain_text", 
+    includeTable: false, 
+    proofread: true,
+    mode: "detailed",
+    voice: "first-person"
+  },
   inputs: { resumeText: "", jobText: "" },
   outputs: {},
   status: { loading: false },

@@ -157,24 +157,24 @@ export const QAPanel = () => {
                 size="sm"
                 onClick={() => {
                   QA_UTILITIES.loadMarketingJob();
-                  toast({ title: "Marketing job loaded", description: "Testing marketing role optimization" });
+                  toast({ title: "Marketing Manager job loaded", description: "B2B SaaS growth role with $150K budget management" });
                 }}
                 className="h-7 text-xs w-full justify-start"
               >
                 <CheckCircle className="h-3 w-3 mr-2" />
-                Marketing Manager Job
+                Marketing Manager - Growth
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   QA_UTILITIES.loadCustomerServiceJob();
-                  toast({ title: "Customer service job loaded", description: "Testing customer service role optimization" });
+                  toast({ title: "Customer Service Rep loaded", description: "Technical support role with 2-hour SLA targets" });
                 }}
                 className="h-7 text-xs w-full justify-start"
               >
                 <CheckCircle className="h-3 w-3 mr-2" />
-                Customer Service Rep
+                Technical Support Rep
               </Button>
               <Button
                 variant="ghost"

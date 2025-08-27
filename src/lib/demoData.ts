@@ -155,6 +155,7 @@ Join our award-winning customer success team as a Technical Support Representati
 **Application Instructions:**
 Please submit your resume and a brief cover letter describing your customer service philosophy and any relevant technical experience. Include examples of how you've successfully resolved challenging customer situations. We conduct phone screenings within 3-5 business days and complete our interview process within 2 weeks.`
 };
+
 export const DEMO_DATA = {
   resume: `John Smith
 Senior Software Engineer
@@ -189,7 +190,7 @@ University of Technology | 2014 - 2018`,
 
   jobDescription: JOB_DESCRIPTIONS.softwareEngineer,
 
-  companySignal: `InnovativeTech Solutions recently announced a $50M Series B funding round led by Accel Partners. The company is expanding rapidly and has grown from 50 to 200 employees in the past year. They're focusing heavily on AI-powered features and have mentioned plans to double their engineering team by end of 2024.`,
+  companySignal: `TechFlow Solutions recently announced a $50M Series B funding round led by Accel Partners. The company is expanding rapidly and has grown from 50 to 200 employees in the past year. They're focusing heavily on AI-powered features and have mentioned plans to double their engineering team by end of 2024.`,
 
   settings: {
     mode: 'detailed' as const,
@@ -212,8 +213,8 @@ export function loadDemoData() {
       resumeText: DEMO_DATA.resume,
       jobText: DEMO_DATA.jobDescription,
       companySignal: DEMO_DATA.companySignal,
-      companyName: 'InnovativeTech Solutions',
-      companyUrl: 'https://innovativetech.com'
+      companyName: 'TechFlow Solutions',
+      companyUrl: 'https://techflowsolutions.com'
     });
     
     // Update settings
@@ -322,7 +323,9 @@ export const QA_UTILITIES = {
     const { useAppDataStore } = require('@/stores/appData');
     useAppDataStore.getState().updateInputs({ 
       jobText: JOB_DESCRIPTIONS.marketingManager,
-      companySignal: 'InnovateLab Inc. just announced their Series A funding round and is expanding their marketing team to support 200% YoY growth.'
+      companySignal: 'InnovateLab Inc. just announced their Series A funding round and is expanding their marketing team to support 200% YoY growth.',
+      companyName: 'InnovateLab Inc.',
+      companyUrl: 'https://innovatelab.com'
     });
   },
   
@@ -331,7 +334,9 @@ export const QA_UTILITIES = {
     const { useAppDataStore } = require('@/stores/appData');
     useAppDataStore.getState().updateInputs({ 
       jobText: JOB_DESCRIPTIONS.customerService,
-      companySignal: 'CloudSync Technologies was recently recognized as a "Best Place to Work" for the third consecutive year and is expanding their customer success team.'
+      companySignal: 'CloudSync Technologies was recently recognized as a "Best Place to Work" for the third consecutive year and is expanding their customer success team.',
+      companyName: 'CloudSync Technologies',
+      companyUrl: 'https://cloudsync.com'
     });
   },
   

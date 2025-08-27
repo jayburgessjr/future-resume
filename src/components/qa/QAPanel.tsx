@@ -156,6 +156,30 @@ export const QAPanel = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
+                  QA_UTILITIES.loadMarketingJob();
+                  toast({ title: "Marketing job loaded", description: "Testing marketing role optimization" });
+                }}
+                className="h-7 text-xs w-full justify-start"
+              >
+                <CheckCircle className="h-3 w-3 mr-2" />
+                Marketing Manager Job
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  QA_UTILITIES.loadCustomerServiceJob();
+                  toast({ title: "Customer service job loaded", description: "Testing customer service role optimization" });
+                }}
+                className="h-7 text-xs w-full justify-start"
+              >
+                <CheckCircle className="h-3 w-3 mr-2" />
+                Customer Service Rep
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
                   QA_UTILITIES.triggerErrorState();
                   toast({ title: "Error state triggered", description: "Testing validation" });
                 }}

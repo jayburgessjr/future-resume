@@ -12,6 +12,8 @@ interface SubscriptionState {
   openCustomerPortal: () => Promise<void>;
   canAccessFeature: (feature: 'version_history' | 'exports' | 'interview_toolkit' | 'unlimited_resumes') => boolean;
   getResumeLimit: () => number;
+  getTrialDaysRemaining: () => number | null;
+  isTrialExpired: () => boolean;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
@@ -107,5 +109,24 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   getResumeLimit: () => {
     const { subscribed } = get();
     return subscribed ? Infinity : 3; // 3 resumes during free trial
+  },
+
+  getTrialDaysRemaining: () => {
+    const { subscribed, subscriptionEnd } = get();
+    if (subscribed || !subscriptionEnd) return null;
+    
+    const endDate = new Date(subscriptionEnd);
+    const now = new Date();
+    const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, daysLeft);
+  },
+
+  isTrialExpired: () => {
+    const { subscribed, subscriptionEnd } = get();
+    if (subscribed || !subscriptionEnd) return false;
+    
+    const endDate = new Date(subscriptionEnd);
+    const now = new Date();
+    return now > endDate;
   }
 }));

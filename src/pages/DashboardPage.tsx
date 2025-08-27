@@ -34,7 +34,9 @@ import {
   AlertTriangle,
   CheckCircle,
   X,
-  Shield
+  Shield,
+  User,
+  LogOut
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -309,6 +311,28 @@ const DashboardPage = () => {
             )}
             <ThemeToggle />
             <SubscriptionBadge />
+            
+            {/* User Menu with Enhanced Logout */}
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg border border-border/50">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{user.email?.split("@")[0]}</span>
+              </div>
+              
+              <Button
+                onClick={async () => {
+                  await signOut();
+                  navigate("/");
+                }}
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive transition-colors border border-transparent hover:border-destructive/20"
+                aria-label="Sign out of your account"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden md:inline">Sign Out</span>
+              </Button>
+            </div>
           </div>
         </header>
 

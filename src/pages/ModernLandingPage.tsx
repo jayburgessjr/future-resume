@@ -15,10 +15,13 @@ import {
   TrendingUp,
   Clock,
   Shield,
-  Award
+  Award,
+  User,
+  LogOut
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import robotWritingResume from "@/assets/robot-writing-resume.jpg";
 
 const ModernLandingPage = () => {
@@ -44,14 +47,41 @@ const ModernLandingPage = () => {
           <div className="flex items-center space-x-3">
             <ThemeToggle />
             {user ? (
-              <>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
-                <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
-                  <Link to="/builder">Resume Builder</Link>
-                </Button>
-              </>
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <SubscriptionBadge />
+                
+                <div className="flex items-center space-x-2">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
+                    <Link to="/builder">Resume Builder</Link>
+                  </Button>
+                </div>
+                
+                {/* User Menu */}
+                <div className="flex items-center gap-2 pl-2 border-l border-border/50">
+                  <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="w-4 h-4" />
+                    <span>{user.email?.split("@")[0]}</span>
+                  </div>
+                  
+                  <Button
+                    onClick={async () => {
+                      const { signOut } = useAuth();
+                      await signOut();
+                      window.location.href = "/";
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    aria-label="Sign out of your account"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="hidden md:inline">Sign Out</span>
+                  </Button>
+                </div>
+              </div>
             ) : (
               <>
                 <Button asChild variant="outline" size="sm">

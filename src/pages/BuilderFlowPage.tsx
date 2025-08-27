@@ -247,17 +247,14 @@ export default function BuilderFlowPage() {
           <div className="flex items-center space-x-4">
             <ThemeToggle />
             {user ? (
-              <div className="flex items-center space-x-2 md:space-x-3">
+              <div className="flex items-center space-x-3">
                 <SubscriptionBadge />
                 
-                {/* User Info - Hidden on mobile */}
-                <div className="hidden sm:flex items-center">
-                  <Badge
-                    variant="secondary"
-                    className="flex items-center gap-1 bg-primary/10 text-primary border-primary/20"
-                  >
+                {/* User Info */}
+                <div className="hidden md:flex items-center">
+                  <Badge className="flex items-center gap-1.5 bg-primary/10 text-primary border-primary/20 px-3 py-1.5">
                     <User className="w-3 h-3" />
-                    {user.email?.split("@")[0]}
+                    <span className="font-medium">{user.email?.split("@")[0]}</span>
                   </Badge>
                 </div>
                 
@@ -266,10 +263,10 @@ export default function BuilderFlowPage() {
                   variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive transition-colors border border-transparent hover:border-destructive/20"
+                  className="flex items-center gap-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 border border-transparent hover:border-destructive/20 hover:scale-105 px-3 py-2"
                   aria-label="Sign out of your account"
                 >
-                  <LogOut className="w-4 h-4 mr-1" />
+                  <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </div>

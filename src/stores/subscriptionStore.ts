@@ -128,5 +128,46 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     const endDate = new Date(subscriptionEnd);
     const now = new Date();
     return now > endDate;
+  },
+
+  // Helper to get subscription status for display
+  getSubscriptionStatus: () => {
+    const { subscribed, subscriptionTier } = get();
+    const trialDays = get().getTrialDaysRemaining();
+    const isExpired = get().isTrialExpired();
+    
+    if (subscribed && subscriptionTier) {
+      return {
+        type: 'pro' as const,
+        label: `${subscriptionTier} Member`,
+        color: 'primary',
+        urgent: false
+      };
+    }
+    
+    if (isExpired) {
+      return {
+        type: 'expired' as const,
+        label: 'Trial Expired',
+        color: 'destructive',
+        urgent: true
+      };
+    }
+    
+    if (trialDays !== null) {
+      return {
+        type: 'trial' as const,
+        label: trialDays > 0 ? `${trialDays} Days Left` : 'Trial Ending',
+        color: trialDays <= 2 ? 'warning' : 'accent',
+        urgent: trialDays <= 2
+      };
+    }
+    
+    return {
+      type: 'free' as const,
+      label: 'Free Trial',
+      color: 'accent',
+      urgent: false
+    };
   }
 }));

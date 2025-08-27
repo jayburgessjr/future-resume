@@ -47,10 +47,10 @@ const ModernLandingPage = () => {
           <div className="flex items-center space-x-3">
             <ThemeToggle />
             {user ? (
-              <div className="flex items-center space-x-2 md:space-x-3">
+              <div className="flex items-center space-x-3">
                 <SubscriptionBadge />
                 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Button asChild variant="outline" size="sm">
                     <Link to="/dashboard">Dashboard</Link>
                   </Button>
@@ -59,11 +59,11 @@ const ModernLandingPage = () => {
                   </Button>
                 </div>
                 
-                {/* User Menu */}
-                <div className="flex items-center gap-2 pl-2 border-l border-border/50">
-                  <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                {/* Enhanced User Menu */}
+                <div className="flex items-center gap-3 pl-3 border-l border-border/50">
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50">
                     <User className="w-4 h-4" />
-                    <span>{user.email?.split("@")[0]}</span>
+                    <span className="text-sm font-medium">{user.email?.split("@")[0]}</span>
                   </div>
                   
                   <Button
@@ -74,7 +74,7 @@ const ModernLandingPage = () => {
                     }}
                     variant="ghost"
                     size="sm"
-                    className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    className="flex items-center gap-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 border border-transparent hover:border-destructive/20 hover:scale-105 px-3 py-2"
                     aria-label="Sign out of your account"
                   >
                     <LogOut className="w-4 h-4" />

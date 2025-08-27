@@ -312,21 +312,22 @@ const DashboardPage = () => {
             <ThemeToggle />
             <SubscriptionBadge />
             
-            {/* User Menu with Enhanced Logout */}
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-muted/50 rounded-lg border border-border/50">
+            {/* Enhanced User Menu */}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{user.email?.split("@")[0]}</span>
               </div>
               
               <Button
                 onClick={async () => {
+                  const { signOut } = useAuth();
                   await signOut();
                   navigate("/");
                 }}
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive transition-colors border border-transparent hover:border-destructive/20"
+                className="flex items-center gap-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 border border-transparent hover:border-destructive/20 hover:scale-105 px-3 py-2"
                 aria-label="Sign out of your account"
               >
                 <LogOut className="w-4 h-4" />

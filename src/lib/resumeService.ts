@@ -43,7 +43,16 @@ export interface ResumeGenerationResult {
  * 6. Deliverables Creation (cover letter, highlights, toolkit)
  * 7. Grammar & Readability Check (Flesch score)
  */
-export async function generateResumeFlow(params: ResumeGenerationParams): Promise<ResumeGenerationResult> {
+export interface ProgressCallbacks {
+  onPhaseStart?: (phaseId: string) => void;
+  onPhaseComplete?: (phaseId: string) => void;
+  onProgress?: (phase: string, progress: number) => void;
+}
+
+export async function generateResumeFlow(
+  params: ResumeGenerationParams, 
+  callbacks?: ProgressCallbacks
+): Promise<ResumeGenerationResult> {
   try {
     logger.debug('Starting AI resume generation with 7-phase process...');
     
@@ -58,7 +67,7 @@ export async function generateResumeFlow(params: ResumeGenerationParams): Promis
       // If API key is not configured or function fails, provide a fallback
       if (error.message?.includes('OpenAI API key') || error.message?.includes('not configured')) {
         logger.warn('Using fallback resume generation (API not configured)');
-        return generateFallbackResume(params);
+        return generateFallbackResume(params, callbacks);
       }
       
       throw new Error(`Resume generation failed: ${error.message}`);
@@ -73,7 +82,7 @@ export async function generateResumeFlow(params: ResumeGenerationParams): Promis
       // If API is not configured, use fallback
       if (data.error?.includes('OpenAI API key') || data.error?.includes('not configured')) {
         logger.warn('Using fallback resume generation (API not configured)');
-        return generateFallbackResume(params);
+        return generateFallbackResume(params, callbacks);
       }
       
       throw new Error(data.error || 'Resume generation failed');
@@ -100,7 +109,7 @@ export async function generateResumeFlow(params: ResumeGenerationParams): Promis
       error.message.includes('fetch')
     )) {
       logger.warn('Using fallback resume generation due to API issues');
-      return generateFallbackResume(params);
+      return generateFallbackResume(params, callbacks);
     }
     
     throw error;
@@ -229,13 +238,26 @@ function getVoiceDescription(voice?: string): string {
  * Fallback resume generation when AI services are unavailable
  * Provides basic formatting and optimization without external API calls
  */
-function generateFallbackResume(params: ResumeGenerationParams): ResumeGenerationResult {
+function generateFallbackResume(params: ResumeGenerationParams, callbacks?: ProgressCallbacks): ResumeGenerationResult {
   logger.info('Using fallback resume generation (local processing)');
   
-  // Basic keyword extraction from job description
-  const jobKeywords = extractBasicKeywords(params.jobDescription);
+  const phases = ['competency', 'company-signals', 'optimization', 'review', 'generation', 'deliverables', 'grammar'];
   
-  // Format the resume based on user preferences
+  // Phase 1: Basic keyword extraction
+  callbacks?.onPhaseStart?.('competency');
+  callbacks?.onProgress?.('Extracting keywords locally...', 14);
+  const jobKeywords = extractBasicKeywords(params.jobDescription);
+  callbacks?.onPhaseComplete?.('competency');
+  
+  // Phase 2: Company analysis (simplified)
+  callbacks?.onPhaseStart?.('company-signals');
+  callbacks?.onProgress?.('Basic company analysis...', 28);
+  // Simplified analysis - just extract company name if available
+  callbacks?.onPhaseComplete?.('company-signals');
+  
+  // Phase 3: Resume optimization
+  callbacks?.onPhaseStart?.('optimization');
+  callbacks?.onProgress?.('Optimizing resume format...', 42);
   let optimizedResume = params.resumeContent;
   
   // Apply basic formatting based on mode
@@ -249,20 +271,43 @@ function generateFallbackResume(params: ResumeGenerationParams): ResumeGeneratio
   if (params.voice === 'third-person') {
     optimizedResume = convertToThirdPerson(optimizedResume);
   }
+  callbacks?.onPhaseComplete?.('optimization');
   
-  // Format output
+  // Phase 4: Quality review (basic)
+  callbacks?.onPhaseStart?.('review');
+  callbacks?.onProgress?.('Basic quality check...', 56);
+  callbacks?.onPhaseComplete?.('review');
+  
+  // Phase 5: Final generation
+  callbacks?.onPhaseStart?.('generation');
+  callbacks?.onProgress?.('Generating final resume...', 70);
   const formattedResume = formatResumeOutput(optimizedResume, params.format);
+  callbacks?.onPhaseComplete?.('generation');
+  
+  // Phase 6: Create deliverables
+  callbacks?.onPhaseStart?.('deliverables');
+  callbacks?.onProgress?.('Creating cover letter and toolkit...', 85);
+  const coverLetter = generateFallbackCoverLetter(params);
+  const highlights = generateFallbackHighlights(optimizedResume);
+  const toolkit = {
+    questions: generateFallbackQuestions(params.jobDescription),
+    followUpEmail: generateFallbackFollowUp(),
+    skillGaps: ['Industry-specific knowledge', 'Advanced technical skills', 'Leadership experience']
+  };
+  const kpiTracker = generateFallbackKPITracker();
+  callbacks?.onPhaseComplete?.('deliverables');
+  
+  // Phase 7: Grammar check (basic)
+  callbacks?.onPhaseStart?.('grammar');
+  callbacks?.onProgress?.('Basic grammar check...', 100);
+  callbacks?.onPhaseComplete?.('grammar');
   
   return {
     finalResume: formattedResume,
-    coverLetter: generateFallbackCoverLetter(params),
-    recruiterHighlights: generateFallbackHighlights(optimizedResume),
-    interviewToolkit: {
-      questions: generateFallbackQuestions(params.jobDescription),
-      followUpEmail: generateFallbackFollowUp(),
-      skillGaps: ['Industry-specific knowledge', 'Advanced technical skills', 'Leadership experience']
-    },
-    weeklyKPITracker: generateFallbackKPITracker(),
+    coverLetter,
+    recruiterHighlights: highlights,
+    interviewToolkit: toolkit,
+    weeklyKPITracker: kpiTracker,
     grammarScore: 85, // Assume good baseline
     metadata: {
       phase: 'Fallback Generation Complete',

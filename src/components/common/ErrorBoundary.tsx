@@ -178,3 +178,68 @@ export function withErrorBoundary<T extends object>(
   
   return WrappedComponent;
 }
+
+// Fix for react-refresh - ensure this file only exports components
+withErrorBoundary.displayName = 'withErrorBoundary';
+
+// Specialized error boundaries for different contexts
+export const AuthErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
+  <ErrorBoundary
+    fallbackComponent={
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+            <CardTitle>Authentication Error</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                There was a problem with authentication. Please try signing in again.
+              </AlertDescription>
+            </Alert>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => window.location.href = '/auth/sign-in'} className="w-full">
+                Go to Sign In
+              </Button>
+              <Button onClick={() => window.location.href = '/'} variant="outline" className="w-full">
+                Go Home
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    }
+  >
+    {children}
+  </ErrorBoundary>
+);
+
+export const ResumeBuilderErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
+  <ErrorBoundary
+    fallbackComponent={
+      <div className="p-6 max-w-2xl mx-auto">
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            The resume builder encountered an error. Your progress has been saved automatically.
+          </AlertDescription>
+        </Alert>
+        <div className="flex gap-2">
+          <Button onClick={() => window.location.reload()} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
+          <Button onClick={() => window.location.href = '/dashboard'} variant="ghost">
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    }
+  >
+    {children}
+  </ErrorBoundary>
+);

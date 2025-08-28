@@ -22,6 +22,8 @@ import { ReturnToGate } from "./components/auth/ReturnToGate";
 import { AuthGuard } from "./components/auth/AuthGuard";
 import { AdminGuard } from "./components/auth/AdminGuard";
 import { AdminPage } from "./pages/admin/AdminPage";
+import { ErrorBoundary, AuthErrorBoundary, ResumeBuilderErrorBoundary } from "./components/common/ErrorBoundary";
+import { OfflineIndicator, OfflineIndicatorMini, SyncStatusDebug } from "./components/common/OfflineIndicator";
 
 const queryClient = new QueryClient();
 
@@ -36,49 +38,60 @@ function AuthenticatedApp() {
   }, [user, loadResumes]);
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<ReturnToGate><ModernLandingPage /></ReturnToGate>} />
-      <Route path="/auth/sign-in" element={<ReturnToGate><AuthSignIn /></ReturnToGate>} />
-      <Route path="/auth/sign-up" element={<ReturnToGate><AuthSignUp /></ReturnToGate>} />
-      <Route path="/pricing" element={<PricingPage />} />
+    <>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<ReturnToGate><ModernLandingPage /></ReturnToGate>} />
+        <Route path="/auth/sign-in" element={<ReturnToGate><AuthSignIn /></ReturnToGate>} />
+        <Route path="/auth/sign-up" element={<ReturnToGate><AuthSignUp /></ReturnToGate>} />
+        <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Legacy auth route */}
+        <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+        
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={<AuthGuard><ErrorBoundary><DashboardPage /></ErrorBoundary></AuthGuard>} />
+        <Route path="/builder" element={<AuthGuard><ResumeBuilderErrorBoundary><BuilderFlowPage /></ResumeBuilderErrorBoundary></AuthGuard>} />
+        <Route path="/cover-letter" element={<AuthGuard><ErrorBoundary><CoverLetterPage /></ErrorBoundary></AuthGuard>} />
+        <Route path="/recruiter-highlights" element={<AuthGuard><ErrorBoundary><RecruiterHighlightsPage /></ErrorBoundary></AuthGuard>} />
+        <Route path="/interview-toolkit" element={<AuthGuard><ErrorBoundary><InterviewToolkitPage /></ErrorBoundary></AuthGuard>} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AuthGuard><AdminGuard><AdminPage /></AdminGuard></AuthGuard>} />
+        
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
       
-      {/* Legacy auth route */}
-      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
-      
-      {/* Protected Routes */}
-      <Route path="/dashboard" element={<AuthGuard><DashboardPage /></AuthGuard>} />
-      <Route path="/builder" element={<AuthGuard><BuilderFlowPage /></AuthGuard>} />
-      <Route path="/cover-letter" element={<AuthGuard><CoverLetterPage /></AuthGuard>} />
-      <Route path="/recruiter-highlights" element={<AuthGuard><RecruiterHighlightsPage /></AuthGuard>} />
-      <Route path="/interview-toolkit" element={<AuthGuard><InterviewToolkitPage /></AuthGuard>} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin" element={<AuthGuard><AdminGuard><AdminPage /></AdminGuard></AuthGuard>} />
-      
-      {/* 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+      {/* Global UI Components */}
+      <OfflineIndicator />
+      <OfflineIndicatorMini />
+      <SyncStatusDebug />
+    </>
   );
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthenticatedApp />
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthErrorBoundary>
+              <AuthenticatedApp />
+            </AuthErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

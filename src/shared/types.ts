@@ -14,18 +14,34 @@ export type Inputs = {
   companyUrl?: string;
 };
 
-export type Outputs = {
-  // Canonical preview key (must always be set on successful generation)
-  resume?: string;
+export interface InterviewToolkit {
+  questions: string[];
+  followUpEmail: string;
+  skillGaps: string[];
+}
 
-  // Back-compat fields (keep writing these to avoid breaking older code)
+export interface Outputs {
+  // Main generated content
+  resume?: string;
+  coverLetter?: string;
+  highlights?: string[];
+  toolkit?: InterviewToolkit;
+  weeklyKPITracker?: string;
+
+  // Metadata
+  metadata?: {
+    phase: string;
+    optimizationScore: number;
+    keywordsMatched: number;
+    wordCount: number;
+    grammarScore?: number;
+  };
+
+  // Back-compat fields (deprecated - use resume field)
   latest?: string;
   targetedResume?: string;
   variants?: { targeted?: string };
-  coverLetter?: string;
-  highlights?: string[];
-  toolkit?: unknown;
-} | null;
+}
 
 export type Status = {
   loading: boolean;

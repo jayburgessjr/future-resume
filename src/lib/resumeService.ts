@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "./logger";
+import { withApiRetry, resumeGenerationCircuitBreaker } from "./retry";
 
 export interface ResumeGenerationParams {
   mode: 'concise' | 'detailed' | 'executive';
@@ -53,67 +54,75 @@ export async function generateResumeFlow(
   params: ResumeGenerationParams, 
   callbacks?: ProgressCallbacks
 ): Promise<ResumeGenerationResult> {
-  try {
+  return resumeGenerationCircuitBreaker.execute(async () => {
     logger.debug('Starting AI resume generation with 7-phase process...');
     
-    // Call the Supabase Edge Function for AI processing
-    const { data, error } = await supabase.functions.invoke('generate-resume', {
-      body: params
-    });
+    try {
+      // Call the Supabase Edge Function with retry logic
+      const { data, error } = await withApiRetry(
+        () => supabase.functions.invoke('generate-resume', {
+          body: params,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+        'Resume generation API'
+      );
 
-    if (error) {
-      logger.error('Resume generation error:', error);
+      if (error) {
+        logger.error('Resume generation error:', error);
+        
+        // If API key is not configured or function fails, provide a fallback
+        if (error.message?.includes('OpenAI API key') || error.message?.includes('not configured')) {
+          logger.warn('Using fallback resume generation (API not configured)');
+          return generateFallbackResume(params, callbacks);
+        }
+        
+        throw new Error(`Resume generation failed: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from resume generation');
+      }
+
+      // Handle response format from Edge Function
+      if (data.success === false) {
+        // If API is not configured, use fallback
+        if (data.error?.includes('OpenAI API key') || data.error?.includes('not configured')) {
+          logger.warn('Using fallback resume generation (API not configured)');
+          return generateFallbackResume(params, callbacks);
+        }
+        
+        throw new Error(data.error || 'Resume generation failed');
+      }
+
+      // Extract the actual result data (Edge Function returns { success: true, ...result })
+      const { success, ...result } = data;
+
+      if (!result.finalResume) {
+        throw new Error('Invalid response: missing finalResume');
+      }
+
+      logger.debug('✅ AI resume generation completed successfully');
+      return result as ResumeGenerationResult;
+
+    } catch (error) {
+      logger.error('Error in generateResumeFlow:', error);
       
-      // If API key is not configured or function fails, provide a fallback
-      if (error.message?.includes('OpenAI API key') || error.message?.includes('not configured')) {
-        logger.warn('Using fallback resume generation (API not configured)');
+      // Check if we should use fallback instead of retrying
+      if (error instanceof Error && (
+        error.message.includes('OpenAI') || 
+        error.message.includes('API key') ||
+        error.message.includes('not configured') ||
+        error.message.includes('Circuit breaker is open')
+      )) {
+        logger.warn('Using fallback resume generation due to API issues');
         return generateFallbackResume(params, callbacks);
       }
       
-      throw new Error(`Resume generation failed: ${error.message}`);
+      throw error;
     }
-
-    if (!data) {
-      throw new Error('No data returned from resume generation');
-    }
-
-    // Handle response format from Edge Function
-    if (data.success === false) {
-      // If API is not configured, use fallback
-      if (data.error?.includes('OpenAI API key') || data.error?.includes('not configured')) {
-        logger.warn('Using fallback resume generation (API not configured)');
-        return generateFallbackResume(params, callbacks);
-      }
-      
-      throw new Error(data.error || 'Resume generation failed');
-    }
-
-    // Extract the actual result data (Edge Function returns { success: true, ...result })
-    const { success, ...result } = data;
-
-    if (!result.finalResume) {
-      throw new Error('Invalid response: missing finalResume');
-    }
-
-    logger.debug('✅ AI resume generation completed successfully');
-    return result as ResumeGenerationResult;
-
-  } catch (error) {
-    logger.error('Error in generateResumeFlow:', error);
-    
-    // Final fallback for any unexpected errors
-    if (error instanceof Error && (
-      error.message.includes('OpenAI') || 
-      error.message.includes('API key') ||
-      error.message.includes('not configured') ||
-      error.message.includes('fetch')
-    )) {
-      logger.warn('Using fallback resume generation due to API issues');
-      return generateFallbackResume(params, callbacks);
-    }
-    
-    throw error;
-  }
+  });
 }
 
 /**

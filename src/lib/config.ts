@@ -89,32 +89,29 @@ try {
   });
 
 } catch (error) {
-  // Fallback configuration for development
-  if (import.meta.env.DEV) {
-    logger.warn('Using fallback configuration for development');
-    config = {
-      supabase: {
-        url: 'https://whfmypoeliexhdoiyvkv.supabase.co',
-        anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZm15cG9lbGlleGhkb2l5dmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NTgwMzksImV4cCI6MjA3MTAzNDAzOX0.T23kr94lHF5Irrj5Kqeft4aT-kEiE5mj7IgHM1vPAH0',
-      },
-      app: {
-        name: 'Future Resume',
-        description: 'AI-powered resume builder',
-        url: window.location.origin,
-      },
-      features: {
-        analytics: false,
-        errorReporting: false,
-        offlineSupport: true,
-      },
-      development: {
-        showDevTools: true,
-        logLevel: 'debug',
-      },
-    };
-  } else {
-    throw error;
-  }
+  // Fallback configuration for both development and production
+  // This prevents white page crashes when environment variables are missing
+  logger.warn('Using fallback configuration due to missing environment variables:', error);
+  config = {
+    supabase: {
+      url: 'https://whfmypoeliexhdoiyvkv.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndoZm15cG9lbGlleGhkb2l5dmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NTgwMzksImV4cCI6MjA3MTAzNDAzOX0.T23kr94lHF5Irrj5Kqeft4aT-kEiE5mj7IgHM1vPAH0',
+    },
+    app: {
+      name: 'Best Darn Resume',
+      description: 'AI-powered resume builder',
+      url: typeof window !== 'undefined' ? window.location.origin : 'https://bestdarnresume.site',
+    },
+    features: {
+      analytics: false,
+      errorReporting: false,
+      offlineSupport: true,
+    },
+    development: {
+      showDevTools: import.meta.env.DEV || false,
+      logLevel: import.meta.env.DEV ? 'debug' : 'error',
+    },
+  };
 }
 
 export { config };

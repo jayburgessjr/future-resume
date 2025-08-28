@@ -58,7 +58,7 @@ export function formatExportContent(exportData: ExportContent, format: 'txt' | '
   const header = [
     `${title.toUpperCase()}`,
     '',
-    ...(metadata?.generatedAt ? [`Generated: ${metadata.generatedAt.toLocaleDateString()}`] : []),
+    ...(metadata?.generatedAt ? [`Generated: ${metadata.generatedAt.toLocaleDateString('en-US')}`] : []),
     ...(metadata?.settings ? [`Settings: ${Object.entries(metadata.settings).map(([k, v]) => `${k}: ${v}`).join(' • ')}`] : []),
     ...(metadata?.wordCount ? [`Word Count: ${metadata.wordCount}`] : []),
     '',

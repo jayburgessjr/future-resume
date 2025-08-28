@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,14 +28,7 @@ const PricingPage = () => {
   const [loading, setLoading] = useState("");
   const [profile, setProfile] = useState<any>(null);
 
-  // Load user profile
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -50,7 +43,14 @@ const PricingPage = () => {
     } catch (error) {
       console.error('Error loading profile:', error);
     }
-  };
+  }, [user]);
+
+  // Load user profile
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user, loadProfile]);
 
   // Redirect if not signed in
   useEffect(() => {

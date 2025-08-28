@@ -42,7 +42,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { isAdmin } = useAdminStatus();
   
@@ -321,7 +321,6 @@ const DashboardPage = () => {
               
               <Button
                 onClick={async () => {
-                  const { signOut } = useAuth();
                   await signOut();
                   navigate("/");
                 }}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,13 +14,13 @@ export const CompanySignalStep = () => {
   const [localCompanySignal, setLocalCompanySignal] = useState(inputs.companySignal || '');
   const [localCompanyUrl, setLocalCompanyUrl] = useState(inputs.companyUrl || '');
 
-  const handleInputChange = () => {
+  const handleInputChange = useCallback(() => {
     updateInputs({
       companyName: localCompanyName,
       companySignal: localCompanySignal,
       companyUrl: localCompanyUrl,
     });
-  };
+  }, [localCompanyName, localCompanySignal, localCompanyUrl, updateInputs]);
 
   // Auto-save on any change
   React.useEffect(() => {
@@ -28,7 +28,7 @@ export const CompanySignalStep = () => {
       handleInputChange();
     }, 500);
     return () => clearTimeout(timeoutId);
-  }, [localCompanyName, localCompanySignal, localCompanyUrl]);
+  }, [localCompanyName, localCompanySignal, localCompanyUrl, handleInputChange]);
 
   const wordCount = localCompanySignal.split(/\s+/).filter(word => word.length > 0).length;
   const isOptimalLength = wordCount >= 10 && wordCount <= 50;

@@ -102,7 +102,7 @@ describe('Export Utilities', () => {
         title: 'Test Resume',
         content: 'Resume content',
         metadata: {
-          generatedAt: new Date('2024-01-01'),
+          generatedAt: new Date(2024, 0, 1), // Year, Month (0-indexed), Day
           wordCount: 2,
           settings: { mode: 'concise' }
         }

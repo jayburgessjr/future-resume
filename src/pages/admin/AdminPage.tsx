@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { KpiCard } from '@/components/admin/KpiCard';
 import { ChartCard } from '@/components/admin/ChartCard';
@@ -68,7 +68,7 @@ export const AdminPage = () => {
   }, [toast]);
 
   // Load users data
-  const loadUsers = async (search = '', filter = '', offset = 0) => {
+  const loadUsers = useCallback(async (search = '', filter = '', offset = 0) => {
     setUsersLoading(true);
     try {
       const data = await getUsersList({
@@ -88,10 +88,10 @@ export const AdminPage = () => {
     } finally {
       setUsersLoading(false);
     }
-  };
+  }, [toast]);
 
   // Load toolkits data
-  const loadToolkits = async (search = '', offset = 0) => {
+  const loadToolkits = useCallback(async (search = '', offset = 0) => {
     setToolkitsLoading(true);
     try {
       const data = await getToolkitsList({
@@ -110,17 +110,17 @@ export const AdminPage = () => {
     } finally {
       setToolkitsLoading(false);
     }
-  };
+  }, [toast]);
 
   // Load users on tab change or search/filter change
   useEffect(() => {
     loadUsers(usersSearch, usersFilter, currentUsersPage * ITEMS_PER_PAGE);
-  }, [usersSearch, usersFilter, currentUsersPage]);
+  }, [usersSearch, usersFilter, currentUsersPage, loadUsers]);
 
   // Load toolkits on tab change or search change
   useEffect(() => {
     loadToolkits(toolkitsSearch, currentToolkitsPage * ITEMS_PER_PAGE);
-  }, [toolkitsSearch, currentToolkitsPage]);
+  }, [toolkitsSearch, currentToolkitsPage, loadToolkits]);
 
   const userColumns = [
     {

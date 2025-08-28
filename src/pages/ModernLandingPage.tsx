@@ -25,7 +25,7 @@ import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import robotWritingResume from "@/assets/robot-writing-resume.jpg";
 
 const ModernLandingPage = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
@@ -68,7 +68,6 @@ const ModernLandingPage = () => {
                   
                   <Button
                     onClick={async () => {
-                      const { signOut } = useAuth();
                       await signOut();
                       window.location.href = "/";
                     }}

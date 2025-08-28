@@ -119,7 +119,18 @@ export const useAppDataStore = create<AppDataStore>()(
     voice: "first-person"
   },
   inputs: { resumeText: "", jobText: "" },
-  outputs: {},
+  outputs: {
+    resume: undefined,
+    coverLetter: undefined,
+    highlights: undefined,
+    toolkit: undefined,
+    weeklyKPITracker: undefined,
+    metadata: undefined,
+    // Back-compat
+    latest: undefined,
+    targetedResume: undefined,
+    variants: undefined,
+  },
   status: { loading: false },
   generationProgress: {
     phase: '',
@@ -134,12 +145,23 @@ export const useAppDataStore = create<AppDataStore>()(
 
   clearData: () => set({
     inputs: { resumeText: "", jobText: "" },
-    outputs: {},
+    outputs: {
+      resume: undefined,
+      coverLetter: undefined,
+      highlights: undefined,
+      toolkit: undefined,
+      weeklyKPITracker: undefined,
+      metadata: undefined,
+      // Back-compat
+      latest: undefined,
+      targetedResume: undefined,
+      variants: undefined,
+    },
     status: { loading: false },
     generationProgress: {
       phase: '',
       progress: 0,
-      phases: DEFAULT_GENERATION_PHASES
+      phases: DEFAULT_GENERATION_PHASES.map(p => ({ ...p, status: 'pending' as const }))
     }
   }),
 
@@ -220,7 +242,8 @@ export const useAppDataStore = create<AppDataStore>()(
             highlights: parsedResult.recruiterHighlights,
             toolkit: parsedResult.interviewToolkit,
             weeklyKPITracker: parsedResult.weeklyKPITracker,
-            // Back-compat fields
+            metadata: parsedResult.metadata,
+            // Back-compat fields (deprecated)
             latest: parsedResult.finalResume,
             targetedResume: parsedResult.finalResume,
             variants: { targeted: parsedResult.finalResume }
@@ -279,7 +302,8 @@ export const useAppDataStore = create<AppDataStore>()(
           highlights: result.recruiterHighlights,
           toolkit: result.interviewToolkit,
           weeklyKPITracker: result.weeklyKPITracker,
-          // Back-compat fields
+          metadata: result.metadata,
+          // Back-compat fields (deprecated)
           latest: result.finalResume,
           targetedResume: result.finalResume,
           variants: { targeted: result.finalResume }
@@ -336,7 +360,18 @@ export const useAppDataStore = create<AppDataStore>()(
         companyName: "",
         companyUrl: ""
       },
-      outputs: null, // Reset outputs to trigger fresh generation
+      outputs: {
+        resume: undefined,
+        coverLetter: undefined,
+        highlights: undefined,
+        toolkit: undefined,
+        weeklyKPITracker: undefined,
+        metadata: undefined,
+        // Back-compat
+        latest: undefined,
+        targetedResume: undefined,
+        variants: undefined,
+      },
       status: { loading: false }
     });
   },

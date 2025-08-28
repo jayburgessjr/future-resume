@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useAutoSave } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,13 +23,20 @@ export const CompanySignalStep = () => {
     });
   }, [localCompanyName, localCompanySignal, localCompanyUrl, updateInputs]);
 
-  // Auto-save on any change
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      handleInputChange();
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [localCompanyName, localCompanySignal, localCompanyUrl, handleInputChange]);
+  // Auto-save with debouncing
+  const { isSaving } = useAutoSave(
+    {
+      companyName: localCompanyName,
+      companySignal: localCompanySignal,
+      companyUrl: localCompanyUrl,
+    },
+    handleInputChange,
+    {
+      delay: 500,
+      enabled: true,
+      skipFirst: true
+    }
+  );
 
   const wordCount = localCompanySignal.split(/\s+/).filter(word => word.length > 0).length;
   const isOptimalLength = wordCount >= 10 && wordCount <= 50;

@@ -12,7 +12,9 @@ import { FileText, Sparkles, AlertCircle, Loader2 } from "lucide-react";
 import { useAppDataStore } from "@/stores";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { useToast } from "@/hooks/use-toast";
+import { useErrorNotification } from "@/hooks/useErrorNotification";
 import { ResumePreview } from "@/components/common/ResumePreview";
+import { ProgressIndicator } from "@/components/ui/progress-indicator";
 
 export const StepResume = () => {
   const [searchParams] = useSearchParams();
@@ -24,9 +26,11 @@ export const StepResume = () => {
     updateSettings,
     updateInputs,
     generateResume,
-    status
+    status,
+    generationProgress
   } = useAppDataStore();
   const { toast } = useToast();
+  const { showResumeGenerationError, showSuccess } = useErrorNotification();
 
   // Handle autostart generation when component mounts
   useEffect(() => {
@@ -62,19 +66,21 @@ export const StepResume = () => {
     try {
       console.log('Starting resume generation from StepResume...');
       await generateResume();
-      toast({
+      showSuccess("Your targeted resume has been created successfully!", {
         title: "Resume Generated!",
-        description: "Your targeted resume has been created.",
+        action: {
+          label: "View",
+          onClick: () => {
+            const previewElement = document.getElementById('resume-preview');
+            previewElement?.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
       });
     } catch (error) {
       console.error('Resume generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Please check your inputs and connection, then try again.",
-        variant: "destructive",
-      });
+      showResumeGenerationError(() => handleGenerate());
     }
-  }, [inputs.resumeText, inputs.jobText, generateResume, toast]);
+  }, [inputs.resumeText, inputs.jobText, generateResume, toast, showSuccess, showResumeGenerationError]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-8 p-8">
@@ -189,10 +195,24 @@ export const StepResume = () => {
             </>
           )}
         </Button>
+
+        {/* Progress Indicator */}
+        {status.loading && (
+          <ProgressIndicator
+            phases={generationProgress.phases.map(p => ({
+              ...p,
+              estimatedDuration: 15 // Default 15 seconds per phase
+            }))}
+            currentPhase={generationProgress.phase}
+            totalProgress={generationProgress.progress}
+            showDetails={true}
+            className="mt-4"
+          />
+        )}
       </div>
 
       {/* Preview Section */}
-      <div className="space-y-4">
+      <div id="resume-preview" className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Resume Preview</h3>
           {resume && (

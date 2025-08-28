@@ -1,93 +1,64 @@
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { 
   ArrowRight, 
-  CheckCircle, 
-  Sparkles, 
   FileText, 
-  Zap,
-  Target,
-  Trophy,
-  Star,
-  Users,
-  TrendingUp,
-  Clock,
-  Shield,
-  Award,
+  Sparkles,
+  ArrowUpRight,
+  Check,
   User,
   LogOut
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
-import robotWritingResume from "@/assets/robot-writing-resume.jpg";
 
 const ModernLandingPage = () => {
   const { user, signOut } = useAuth();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <FileText className="h-8 w-8 text-accent" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full"></div>
+    <div className="min-h-screen bg-background">
+      {/* Clean Header */}
+      <header className="border-b border-border/20 sticky top-0 z-50 bg-background/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
+              <FileText className="h-4 w-4 text-background" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">
-                Best Darn Resume
-              </h1>
-              <p className="text-xs text-muted-foreground">AI-Powered Career Success</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
+            <span className="text-xl font-semibold tracking-tight">Future Resume</span>
+          </Link>
+          
+          <div className="flex items-center space-x-4">
             <ThemeToggle />
             {user ? (
               <div className="flex items-center space-x-3">
                 <SubscriptionBadge />
-                
-                <div className="flex items-center space-x-3">
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/dashboard">Dashboard</Link>
-                  </Button>
-                  <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
-                    <Link to="/builder">Resume Builder</Link>
-                  </Button>
-                </div>
-                
-                {/* Enhanced User Menu */}
-                <div className="flex items-center gap-3 pl-3 border-l border-border/50">
-                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm font-medium">{user.email?.split("@")[0]}</span>
-                  </div>
-                  
-                  <Button
-                    onClick={async () => {
-                      await signOut();
-                      window.location.href = "/";
-                    }}
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 hover:bg-destructive/10 hover:text-destructive transition-all duration-200 border border-transparent hover:border-destructive/20 hover:scale-105 px-3 py-2"
-                    aria-label="Sign out of your account"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span className="hidden md:inline">Sign Out</span>
-                  </Button>
-                </div>
+                <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <Button asChild size="sm" className="bg-foreground text-background hover:bg-foreground/90">
+                  <Link to="/builder">Resume Builder</Link>
+                </Button>
+                <Button
+                  onClick={async () => {
+                    await signOut();
+                    window.location.href = "/";
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
               </div>
             ) : (
               <>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/auth/sign-in">Sign In</Link>
+                <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  <Link to="/auth/sign-in">Sign in</Link>
                 </Button>
-                <Button asChild className="bg-gradient-to-r from-primary to-accent text-white">
-                  <Link to="/auth/sign-up">Start Free</Link>
+                <Button asChild size="sm" className="bg-foreground text-background hover:bg-foreground/90">
+                  <Link to="/auth/sign-up">Get started</Link>
                 </Button>
               </>
             )}
@@ -96,301 +67,144 @@ const ModernLandingPage = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-32">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/10"></div>
-        <div className="container mx-auto px-4 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 px-4 py-2">
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  #1 AI Resume Builder
-                </Badge>
-                
-                <h2 className="text-5xl lg:text-7xl font-bold leading-tight">
-                  Land Your{" "}
-                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Dream Job
-                  </span>{" "}
-                  in Days
-                </h2>
-                
-                <p className="text-xl text-muted-foreground leading-relaxed max-w-xl">
-                  Our AI-powered platform creates ATS-optimized resumes that get you 3x more interviews. 
-                  Join 50,000+ professionals who've accelerated their careers.
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="bg-gradient-to-r from-primary to-accent text-white text-lg px-8 py-4 hover:scale-105 transition-transform">
-                  <Link to="/auth/sign-up">
-                    Start Free Trial
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-4 hover:bg-accent/10">
-                  Watch Demo
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">Free 7-Day Trial</p>
-                    <p className="text-sm text-muted-foreground">No credit card required</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">3x More Interviews</p>
-                    <p className="text-sm text-muted-foreground">Proven results</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-semibold">ATS-Optimized</p>
-                    <p className="text-sm text-muted-foreground">100% compatible</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-accent/20 rounded-3xl transform rotate-3 blur-lg"></div>
-              <Card className="relative bg-card/50 backdrop-blur-sm border-0 shadow-2xl">
-                <CardContent className="p-8">
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-2xl font-bold">AI-Powered Resume Creation</h3>
-                      <Badge className="bg-gradient-to-r from-primary to-accent text-white">AI</Badge>
-                    </div>
-                    
-                    {/* AI Robot Image */}
-                    <div className="relative rounded-2xl overflow-hidden">
-                      <img 
-                        src={robotWritingResume} 
-                        alt="AI Robot writing a professional resume"
-                        className="w-full h-auto object-cover rounded-2xl shadow-lg"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl"></div>
-                    </div>
-                    
-                    {/* Benefits Below Image */}
-                    <div className="grid grid-cols-3 gap-4 mt-6">
-                      <div className="bg-primary/10 rounded-lg p-4 text-center">
-                        <TrendingUp className="h-6 w-6 text-primary mx-auto mb-2" />
-                        <p className="text-sm font-semibold">98% Match</p>
-                      </div>
-                      <div className="bg-accent/10 rounded-lg p-4 text-center">
-                        <Target className="h-6 w-6 text-accent mx-auto mb-2" />
-                        <p className="text-sm font-semibold">ATS Ready</p>
-                      </div>
-                      <div className="bg-primary/10 rounded-lg p-4 text-center">
-                        <Award className="h-6 w-6 text-primary mx-auto mb-2" />
-                        <p className="text-sm font-semibold">Pro Quality</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center space-y-8">
-            <div className="flex items-center justify-center gap-8 text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <span className="font-semibold">50,000+ Users</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold">4.9/5 Rating</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-accent" />
-                <span className="font-semibold">Industry Leader</span>
-              </div>
-            </div>
+      <section className="max-w-7xl mx-auto px-6 py-24 lg:py-32">
+        <div className="max-w-4xl mx-auto text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+          <div className="space-y-6">
+            <h1 className="text-5xl lg:text-6xl font-semibold tracking-tight leading-none">
+              Create resumes that 
+              <span className="block text-muted-foreground">get you hired</span>
+            </h1>
             
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center mb-4">
-                    {[1,2,3,4,5].map((star) => (
-                      <Star key={star} className="h-5 w-5 text-yellow-500 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4">
-                    "Got 5 interviews in the first week after using this. The AI optimization is incredible!"
-                  </p>
-                  <p className="font-semibold">Sarah Chen</p>
-                  <p className="text-sm text-muted-foreground">Software Engineer</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center mb-4">
-                    {[1,2,3,4,5].map((star) => (
-                      <Star key={star} className="h-5 w-5 text-yellow-500 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4">
-                    "Landed my dream role at FAANG. This tool made all the difference in my application."
-                  </p>
-                  <p className="font-semibold">Marcus Johnson</p>
-                  <p className="text-sm text-muted-foreground">Product Manager</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-card/50 backdrop-blur-sm border-border/50">
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center mb-4">
-                    {[1,2,3,4,5].map((star) => (
-                      <Star key={star} className="h-5 w-5 text-yellow-500 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-muted-foreground mb-4">
-                    "The career change support was amazing. Went from retail to tech in 3 months!"
-                  </p>
-                  <p className="font-semibold">Jessica Rodriguez</p>
-                  <p className="text-sm text-muted-foreground">Data Analyst</p>
-                </CardContent>
-              </Card>
+            <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+              Generate ATS-optimized resumes in seconds with AI. 
+              Join thousands who've landed their dream jobs.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button asChild size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-base px-8 transition-all duration-200 hover:scale-105">
+              <Link to="/auth/sign-up">
+                Get started for free
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground group transition-all duration-200">
+              <Link to="/pricing">
+                View pricing
+                <ArrowUpRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="pt-12 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+            <p className="text-sm text-muted-foreground/70 mb-8">Trusted by professionals at</p>
+            <div className="flex items-center justify-center gap-12 text-muted-foreground/50 text-sm font-medium">
+              <span className="hover:text-muted-foreground/70 transition-colors cursor-default">Google</span>
+              <span className="hover:text-muted-foreground/70 transition-colors cursor-default">Microsoft</span>
+              <span className="hover:text-muted-foreground/70 transition-colors cursor-default">Apple</span>
+              <span className="hover:text-muted-foreground/70 transition-colors cursor-default">Amazon</span>
+              <span className="hover:text-muted-foreground/70 transition-colors cursor-default">Meta</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0 mb-4">
-              Powerful Features
-            </Badge>
-            <h3 className="text-4xl font-bold mb-4">Everything You Need to Win</h3>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our AI-powered platform gives you every advantage in today's competitive job market
+      <section className="max-w-7xl mx-auto px-6 py-24">
+        <div className="max-w-3xl mx-auto text-center space-y-16">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <h2 className="text-3xl lg:text-4xl font-semibold tracking-tight">
+              Everything you need to stand out
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Built for modern job seekers who want results
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="card-interactive bg-gradient-to-br from-primary/5 to-transparent">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Sparkles className="h-8 w-8 text-white" />
-                </div>
-                <h4 className="text-xl font-semibold mb-4">AI-Powered Optimization</h4>
-                <p className="text-muted-foreground">
-                  Our advanced AI analyzes job descriptions and optimizes your resume for maximum ATS compatibility and human appeal.
+            <div className="space-y-4 group cursor-default animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:bg-muted/80 transition-colors duration-200">
+                <Sparkles className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold group-hover:text-foreground/80 transition-colors">AI-powered</h3>
+                <p className="text-muted-foreground group-hover:text-muted-foreground/80 transition-colors">
+                  Smart algorithms that understand what recruiters want to see
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card className="card-interactive bg-gradient-to-br from-accent/5 to-transparent">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-accent to-primary rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Target className="h-8 w-8 text-white" />
-                </div>
-                <h4 className="text-xl font-semibold mb-4">Job-Specific Tailoring</h4>
-                <p className="text-muted-foreground">
-                  Automatically customize your resume for each application with industry-specific keywords and formatting.
+            <div className="space-y-4 group cursor-default animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:bg-muted/80 transition-colors duration-200">
+                <Check className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold group-hover:text-foreground/80 transition-colors">ATS-friendly</h3>
+                <p className="text-muted-foreground group-hover:text-muted-foreground/80 transition-colors">
+                  Formats that pass through applicant tracking systems
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card className="card-interactive bg-gradient-to-br from-primary/5 to-transparent">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Clock className="h-8 w-8 text-white" />
-                </div>
-                <h4 className="text-xl font-semibold mb-4">Lightning Fast</h4>
-                <p className="text-muted-foreground">
-                  Generate a professional, optimized resume in under 60 seconds. No more hours of formatting and editing.
+            <div className="space-y-4 group cursor-default animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:bg-muted/80 transition-colors duration-200">
+                <ArrowUpRight className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold group-hover:text-foreground/80 transition-colors">Interview ready</h3>
+                <p className="text-muted-foreground group-hover:text-muted-foreground/80 transition-colors">
+                  Complete toolkit including cover letters and interview prep
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <Card className="max-w-4xl mx-auto bg-gradient-to-br from-primary via-primary to-accent text-white border-0 shadow-2xl">
-            <CardContent className="p-12 text-center">
-              <Badge className="bg-white/20 text-white border-0 mb-6">
-                🎉 Limited Time Offer
-              </Badge>
-              <h3 className="text-4xl font-bold mb-6">Start Your Free Trial Today</h3>
-              <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-                Join thousands of successful job seekers who've transformed their careers. 
-                No credit card required for your 7-day free trial.
+      {/* Simple CTA */}
+      <section className="max-w-7xl mx-auto px-6 py-32">
+        <div className="max-w-2xl mx-auto text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h2 className="text-4xl lg:text-5xl font-semibold tracking-tight">
+                Ready to get started?
+              </h2>
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                Join thousands of professionals who've upgraded their careers
               </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-                <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-4">
-                  <Link to="/auth/sign-up">
-                    Start Free Trial
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10 text-lg px-8 py-4">
-                  View Pricing Plans
-                </Button>
-              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="bg-foreground text-background hover:bg-foreground/90 transition-all duration-200 hover:scale-105">
+                <Link to="/auth/sign-up">
+                  Start free trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground transition-colors duration-200">
+                <Link to="/pricing">Learn about pricing</Link>
+              </Button>
+            </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                <div>
-                  <p className="text-2xl font-bold">7 Days</p>
-                  <p className="text-white/80">Free Trial</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">$20/mo</p>
-                  <p className="text-white/80">After Trial</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">Cancel</p>
-                  <p className="text-white/80">Anytime</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">24/7</p>
-                  <p className="text-white/80">Support</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <p className="text-sm text-muted-foreground/70">
+              No credit card required • 7-day free trial
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-12 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <FileText className="h-6 w-6 text-accent" />
-              <div>
-                <span className="font-semibold">Resume Builder Pro</span>
-                <p className="text-sm text-muted-foreground">© 2024 All rights reserved</p>
+      {/* Clean Footer */}
+      <footer className="border-t border-border/20 py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded bg-foreground flex items-center justify-center">
+                <FileText className="h-3 w-3 text-background" />
               </div>
+              <span className="font-semibold">Future Resume</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              Made with ❤️ for ambitious professionals
+              © 2024 Future Resume. Built for ambitious professionals.
             </div>
           </div>
         </div>

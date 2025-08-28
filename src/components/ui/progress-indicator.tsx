@@ -126,6 +126,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
 };
 
 // Progress indicator hook for easier state management
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProgressIndicator = (initialPhases: ProgressPhase[]) => {
   const [phases, setPhases] = React.useState<ProgressPhase[]>(initialPhases);
   const [currentPhase, setCurrentPhase] = React.useState<string | undefined>();

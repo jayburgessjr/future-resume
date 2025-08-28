@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDataStore } from "@/stores";
+import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SubscriptionBadge } from "@/components/subscription/SubscriptionBadge";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ import { StepResume } from "@/components/flow/StepResume";
 import { StepCoverLetter } from "@/components/flow/StepCoverLetter";
 import { StepHighlights } from "@/components/flow/StepHighlights";
 import { StepInterview } from "@/components/flow/StepInterview";
-import { FlowFooter } from "@/components/flow/FlowFooter";
+import { StepNavigation } from "@/components/flow/StepNavigation";
 import { ReviewBar } from "@/components/flow/ReviewBar";
 
 type FlowStep = "resume" | "cover-letter" | "highlights" | "interview";
@@ -91,6 +92,7 @@ export default function BuilderFlowPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { toast } = useToast();
 
   const {
     settings,
@@ -150,6 +152,21 @@ export default function BuilderFlowPage() {
   const resumeWords = (resumeText.match(/\S+/g) || []).length;
   const resumeWithinLimit = resumeText.length > 0 && resumeWords <= 550;
   const isResumePreviewed = searchParams.get("resumePreviewed") === "1";
+
+  // Track completed steps
+  const completedSteps = [];
+  if (outputs?.resume && resumeWithinLimit && isResumePreviewed) {
+    completedSteps.push('resume');
+  }
+  if (outputs?.coverLetter) {
+    completedSteps.push('cover-letter');
+  }
+  if (outputs?.highlights?.length) {
+    completedSteps.push('highlights');
+  }
+  if (outputs?.toolkit) {
+    completedSteps.push('interview');
+  }
 
   // If resume changes, clear preview flag so user must re-confirm
   const lastResumeRef = useRef<string>("");
@@ -285,13 +302,20 @@ export default function BuilderFlowPage() {
           <Stepper
             currentStep={currentStep}
             steps={steps}
+            completedSteps={completedSteps}
             onStepClick={(step) => {
               const target = step as FlowStep;
               const targetIdx = steps.indexOf(target);
               const currentIdx = getCurrentStepIndex();
-              if (targetIdx <= currentIdx || canProceed()) {
+              // Allow navigation to completed steps or current/previous steps
+              if (completedSteps.includes(target) || targetIdx <= currentIdx) {
                 goTo(target);
               }
+            }}
+            canAccessStep={(step) => {
+              const targetIdx = steps.indexOf(step);
+              const currentIdx = getCurrentStepIndex();
+              return completedSteps.includes(step) || targetIdx <= currentIdx;
             }}
           />
         </div>
@@ -337,15 +361,36 @@ export default function BuilderFlowPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <FlowFooter
+      {/* Enhanced Step Navigation */}
+      <StepNavigation
         currentStep={currentStep}
         currentStepIndex={getCurrentStepIndex()}
         totalSteps={steps.length}
         canProceed={canProceed()}
+        canGoBack={getCurrentStepIndex() > 0}
         onNext={handleNext}
         onBack={handleBack}
         isLoading={status.loading}
+        showPreview={currentStep === 'resume' && resumeWithinLimit}
+        onPreview={openResumePreview}
+        onSaveDraft={() => {
+          // Save current progress as draft
+          const draftData = {
+            inputs,
+            settings,
+            outputs,
+            currentStep,
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem('resume_builder_draft', JSON.stringify(draftData));
+          
+          // Show confirmation
+          toast({
+            title: "Draft Saved",
+            description: "Your progress has been saved locally.",
+            duration: 2000,
+          });
+        }}
       />
 
       {/* Inline Modal (no external lib) */}

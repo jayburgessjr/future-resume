@@ -16,6 +16,9 @@ import { ToolkitsList } from "@/components/dashboard/ToolkitsList";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { ConfirmDialog } from "@/components/dashboard/ConfirmDialog";
+import { OnboardingTour } from "@/components/onboarding/OnboardingTour";
+import { UsageMeter } from "@/components/subscription/UsageMeter";
+import { FeatureCallout } from "@/components/ui/feature-callout";
 import { 
   useDashboardStore, 
   type Job, 
@@ -24,6 +27,7 @@ import {
 import { useAppDataStore } from "@/stores";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -45,6 +49,7 @@ const DashboardPage = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { isAdmin } = useAdminStatus();
+  const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
   
   const { 
     jobs, 
@@ -281,7 +286,7 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <div className="container max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
-        <header className="flex items-center justify-between mb-8">
+        <header className="flex items-center justify-between mb-8" data-tour="dashboard-header">
           <div className="flex items-center gap-4">
             <Button asChild variant="ghost" size="sm">
               <Link to="/" className="flex items-center gap-2">
@@ -355,7 +360,7 @@ const DashboardPage = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Master Resume Section */}
-              <section>
+              <section data-tour="master-resume-card">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="h-5 w-5 text-primary" />
                   <h2 className="text-xl font-semibold">Master Résumé</h2>
@@ -376,7 +381,7 @@ const DashboardPage = () => {
               </section>
 
               {/* Job Descriptions Section */}
-              <section>
+              <section data-tour="job-list">
                 <div className="flex items-center gap-2 mb-4">
                   <Briefcase className="h-5 w-5 text-accent" />
                   <h2 className="text-xl font-semibold">Job Descriptions</h2>
@@ -395,7 +400,7 @@ const DashboardPage = () => {
               </section>
 
               {/* Job Toolkits Section */}
-              <section>
+              <section data-tour="toolkits-section">
                 <div className="flex items-center gap-2 mb-4">
                   <Package className="h-5 w-5 text-primary" />
                   <h2 className="text-xl font-semibold">Job Toolkits</h2>
@@ -410,7 +415,8 @@ const DashboardPage = () => {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              <QuickActions
+              <div data-tour="resume-builder-button">
+                <QuickActions
                 onCreateMasterResume={() => setShowResumeDialog(true)}
                 onAddJobDescription={() => setShowJobDialog(true)}
                 onRunComparison={() => {
@@ -437,6 +443,58 @@ const DashboardPage = () => {
                 hasJobs={jobs.length > 0}
                 hasMasterResume={!!masterResume}
               />
+              </div>
+              
+              {/* Usage Meter for Free Users */}
+              <UsageMeter />
+
+              {/* Feature Discovery Callouts */}
+              {!masterResume && (
+                <FeatureCallout
+                  id="master_resume_tip"
+                  title="Start with Your Master Resume"
+                  description="Upload your current resume as a foundation. We'll use AI to create targeted versions for each job you apply to."
+                  variant="feature"
+                  action={{
+                    label: "Add Master Resume",
+                    onClick: () => setShowResumeDialog(true)
+                  }}
+                />
+              )}
+
+              {masterResume && jobs.length === 0 && (
+                <FeatureCallout
+                  id="first_job_tip"
+                  title="Add Your First Job Description"
+                  description="Paste a job posting you're interested in. Our AI will analyze it and create a perfectly matched application package."
+                  variant="feature"
+                  action={{
+                    label: "Add Job Description",
+                    onClick: () => setShowJobDialog(true)
+                  }}
+                />
+              )}
+
+              {masterResume && jobs.length > 0 && toolkits.length === 0 && (
+                <FeatureCallout
+                  id="first_generation_tip"
+                  title="Generate Your First Application Package"
+                  description="Ready to create a targeted resume? Our 4-step process will generate a complete application package: resume, cover letter, recruiter highlights, and interview prep."
+                  variant="upgrade"
+                  action={{
+                    label: "Start Building",
+                    onClick: () => {
+                      const selectedJob = jobs[0];
+                      hydrateFromDashboard({
+                        resumeText: masterResume?.toString() || '',
+                        jobText: selectedJob?.description || '',
+                        companySignal: selectedJob?.companyInfo || ''
+                      });
+                      navigate('/builder?step=resume&autostart=1');
+                    }
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
@@ -659,6 +717,13 @@ const DashboardPage = () => {
           onConfirm={confirmDialog.onConfirm}
           variant={confirmDialog.variant}
           confirmText={confirmDialog.variant === "destructive" ? "Delete" : "Confirm"}
+        />
+
+        {/* Onboarding Tour */}
+        <OnboardingTour 
+          isOpen={showOnboarding}
+          onComplete={completeOnboarding}
+          onSkip={skipOnboarding}
         />
       </div>
     </div>

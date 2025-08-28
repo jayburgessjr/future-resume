@@ -13,6 +13,10 @@ import { useAppDataStore } from "@/stores";
 import { ExportBar } from "@/components/dashboard/ExportBar";
 import { useToast } from "@/hooks/use-toast";
 import { useErrorNotification } from "@/hooks/useErrorNotification";
+import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { useAutosave } from "@/hooks/useAutosave";
+import { AutosaveIndicator } from "@/components/ui/autosave-indicator";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { ResumePreview } from "@/components/common/ResumePreview";
 import { ProgressIndicator } from "@/components/ui/progress-indicator";
 
@@ -31,6 +35,34 @@ export const StepResume = () => {
   } = useAppDataStore();
   const { toast } = useToast();
   const { showResumeGenerationError, showSuccess } = useErrorNotification();
+  const { hasReachedMonthlyLimit, getMonthlyGenerationLimit } = useSubscriptionStore();
+
+  // Autosave functionality
+  const autosaveData = { 
+    inputs, 
+    settings,
+    timestamp: new Date().toISOString()
+  };
+  
+  const {
+    isSaving: isAutosaving,
+    lastSaved,
+    hasUnsavedChanges,
+    error: autosaveError,
+    forceSave
+  } = useAutosave(
+    autosaveData,
+    async (data) => {
+      // Save to localStorage as draft
+      const draftKey = 'resume_builder_draft';
+      localStorage.setItem(draftKey, JSON.stringify(data));
+    },
+    {
+      delay: 1500, // Save after 1.5 seconds of inactivity
+      enabled: true,
+      showNotification: false // We'll show our own indicator
+    }
+  );
 
   // Handle autostart generation when component mounts
   useEffect(() => {
@@ -63,6 +95,16 @@ export const StepResume = () => {
       return;
     }
 
+    // Check monthly generation limit for free users
+    if (hasReachedMonthlyLimit()) {
+      toast({
+        title: "Monthly Limit Reached",
+        description: `You've reached your limit of ${getMonthlyGenerationLimit()} resume generations this month. Upgrade to Pro for unlimited generations.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       console.log('Starting resume generation from StepResume...');
       await generateResume();
@@ -80,31 +122,54 @@ export const StepResume = () => {
       console.error('Resume generation error:', error);
       showResumeGenerationError(() => handleGenerate());
     }
-  }, [inputs.resumeText, inputs.jobText, generateResume, toast, showSuccess, showResumeGenerationError]);
+  }, [inputs.resumeText, inputs.jobText, generateResume, toast, showSuccess, showResumeGenerationError, hasReachedMonthlyLimit, getMonthlyGenerationLimit]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-8 p-8">
       {/* Input Section */}
       <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
-            <FileText className="w-5 h-5 text-white" />
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Generate Resume</h2>
+              <p className="text-muted-foreground">Create an ATS-optimized resume for your target job</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Generate Resume</h2>
-            <p className="text-muted-foreground">Create an ATS-optimized resume for your target job</p>
-          </div>
+          
+          {/* Autosave Indicator */}
+          <AutosaveIndicator
+            isSaving={isAutosaving}
+            lastSaved={lastSaved}
+            hasUnsavedChanges={hasUnsavedChanges}
+            error={autosaveError}
+            onForceSave={forceSave}
+          />
         </div>
 
         {/* Settings */}
         <Card className="bg-muted/30">
           <CardHeader>
-            <CardTitle className="text-lg">Configuration</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Configuration
+              <HelpTooltip 
+                content="These settings control how your resume is generated. Choose options that best match your experience level and the job you're targeting."
+                variant="tip"
+              />
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="mode">Resume Mode</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="mode">Resume Mode</Label>
+                  <HelpTooltip 
+                    content="Concise: Best for entry-level or career changers (≤350 words). Detailed: For experienced professionals (≤550 words). Executive: For senior leadership roles (≤450 words)."
+                    variant="info"
+                  />
+                </div>
                 <Select value={settings.mode} onValueChange={(value) => updateSettings({ mode: value as any })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select mode" />
@@ -118,7 +183,13 @@ export const StepResume = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="voice">Voice Style</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor="voice">Voice Style</Label>
+                  <HelpTooltip 
+                    content="First Person: Uses 'I developed...' - more personal and engaging. Third Person: Uses 'Developed...' - traditional and formal style preferred by some industries."
+                    variant="info"
+                  />
+                </div>
                 <Select value={settings.voice} onValueChange={(value) => updateSettings({ voice: value as any })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select voice" />
@@ -133,7 +204,13 @@ export const StepResume = () => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label>Include Skills Table</Label>
+                <div className="flex items-center gap-1">
+                  <Label>Include Skills Table</Label>
+                  <HelpTooltip 
+                    content="Adds a structured skills section with technical and soft skills organized in a clean table format. Recommended for technical roles."
+                    variant="info"
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">Add structured skills section</p>
               </div>
               <Switch

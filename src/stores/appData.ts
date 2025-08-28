@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { generateResumeFlow } from "@/lib/resumeService";
 import { resumeCache } from "@/lib/cache";
 import { processInBackground } from "@/lib/backgroundProcessor";
+import { UsageTracker } from "@/lib/usageTracking";
 import type { Inputs, Outputs, Settings, Status } from "@/shared/types";
 
 export const selectGeneratedResume = (s: AppDataStore): string =>
@@ -231,6 +232,9 @@ export const useAppDataStore = create<AppDataStore>()(
           }
         }));
 
+        // Track usage even for cached results
+        UsageTracker.incrementUsage('resumeGenerations');
+
         return parsedResult.finalResume;
       }
 
@@ -289,6 +293,9 @@ export const useAppDataStore = create<AppDataStore>()(
           lastGenerated: new Date().toISOString() 
         }
       }));
+
+      // Track usage for free tier limits
+      UsageTracker.incrementUsage('resumeGenerations');
 
       return result.finalResume;
     } catch (e) {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { UsageTracker } from '@/lib/usageTracking';
 
 interface SubscriptionState {
   subscribed: boolean;
@@ -12,6 +13,8 @@ interface SubscriptionState {
   openCustomerPortal: () => Promise<void>;
   canAccessFeature: (feature: 'version_history' | 'exports' | 'interview_toolkit' | 'unlimited_resumes') => boolean;
   getResumeLimit: () => number;
+  getMonthlyGenerationLimit: () => number;
+  hasReachedMonthlyLimit: () => boolean;
   getTrialDaysRemaining: () => number | null;
   isTrialExpired: () => boolean;
 }
@@ -98,9 +101,11 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     switch (feature) {
       case 'unlimited_resumes':
       case 'version_history':
+        return subscribed; // Pro only features
       case 'exports':
+        return true; // Allow basic PDF export for free users (with watermark)
       case 'interview_toolkit':
-        return subscribed;
+        return true; // Allow preview access to interview toolkit
       default:
         return false;
     }
@@ -108,7 +113,19 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
 
   getResumeLimit: () => {
     const { subscribed } = get();
-    return subscribed ? Infinity : 3; // 3 resumes during free trial
+    return subscribed ? Infinity : 5; // Increased from 3 to 5 resumes for free tier
+  },
+
+  getMonthlyGenerationLimit: () => {
+    const { subscribed } = get();
+    return subscribed ? Infinity : 3; // 3 generations per month for free users
+  },
+
+  hasReachedMonthlyLimit: () => {
+    const { subscribed } = get();
+    if (subscribed) return false;
+    
+    return UsageTracker.hasReachedLimit('resumeGenerations', get().getMonthlyGenerationLimit());
   },
 
   getTrialDaysRemaining: () => {

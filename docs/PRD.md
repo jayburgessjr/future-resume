@@ -1,4 +1,7 @@
-# **The Best Darn Job Resume Builder - PRD/Knowledge Base**
+# **[DEPRECATED] The Best Darn Job Resume Builder - PRD/Knowledge Base**
+
+> ⚠️ **This PRD is outdated and has been replaced.**  
+> **See the current PRD**: [/PRD.md](../PRD.md)
 
 ## **Purpose & Vision**
 AI-powered resume optimization platform that transforms job applications through intelligent content rewriting, ATS optimization, and comprehensive career toolkit generation. Leverages a 7-phase AI process to create job-matched resumes with supporting materials.

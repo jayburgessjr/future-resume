@@ -9,6 +9,7 @@ interface SubscriptionState {
   loading: boolean;
   error: string | null;
   checkSubscription: () => Promise<void>;
+  clearSubscription: () => void;
   createCheckout: () => Promise<void>;
   openCustomerPortal: () => Promise<void>;
   canAccessFeature: (feature: 'version_history' | 'exports' | 'interview_toolkit' | 'unlimited_resumes') => boolean;
@@ -47,6 +48,16 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         loading: false 
       });
     }
+  },
+
+  clearSubscription: () => {
+    set({
+      subscribed: false,
+      subscriptionTier: null,
+      subscriptionEnd: null,
+      loading: false,
+      error: null
+    });
   },
 
   createCheckout: async () => {

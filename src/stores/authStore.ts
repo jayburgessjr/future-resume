@@ -28,6 +28,9 @@ export const useAuthStore = create<AuthStore>()(
         // Check subscription status when user is authenticated
         if (user && session) {
           await useSubscriptionStore.getState().checkSubscription();
+        } else {
+          // Clear subscription data if no user
+          useSubscriptionStore.getState().clearSubscription();
         }
       },
 

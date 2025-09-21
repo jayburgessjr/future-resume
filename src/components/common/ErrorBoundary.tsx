@@ -67,12 +67,12 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private reportIssue = () => {
-    const issueUrl = `https://github.com/anthropics/claude-code/issues/new?title=${encodeURIComponent(
-      `Error: ${this.state.error?.message || 'Unknown error'}`
-    )}&body=${encodeURIComponent(
-      `**Error Message:**\n${this.state.error?.message}\n\n**Stack Trace:**\n${this.state.error?.stack}\n\n**Component Stack:**\n${this.state.errorInfo?.componentStack}\n\n**User Agent:**\n${navigator.userAgent}`
-    )}`;
-    window.open(issueUrl, '_blank');
+    // Create a mailto link instead of GitHub issue
+    const subject = encodeURIComponent(`Error Report: ${this.state.error?.message || 'Unknown error'}`);
+    const body = encodeURIComponent(
+      `Error Message: ${this.state.error?.message}\n\nStack Trace:\n${this.state.error?.stack}\n\nComponent Stack:\n${this.state.errorInfo?.componentStack}\n\nUser Agent: ${navigator.userAgent}`
+    );
+    window.location.href = `mailto:support@example.com?subject=${subject}&body=${body}`;
   };
 
   public render() {

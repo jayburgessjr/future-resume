@@ -80,15 +80,13 @@ const App = () => (
         enableSystem
         disableTransitionOnChange
       >
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AuthErrorBoundary>
-              <AuthenticatedApp />
-            </AuthErrorBoundary>
-          </BrowserRouter>
-        </TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthErrorBoundary>
+            <AuthenticatedApp />
+          </AuthErrorBoundary>
+        </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>

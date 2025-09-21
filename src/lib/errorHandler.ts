@@ -277,8 +277,8 @@ export class AppErrorHandler {
     }
 
     // Custom analytics endpoint (example)
-    if (process.env.VITE_ANALYTICS_ENDPOINT) {
-      fetch(process.env.VITE_ANALYTICS_ENDPOINT, {
+    if (import.meta.env.VITE_ANALYTICS_ENDPOINT) {
+      fetch(import.meta.env.VITE_ANALYTICS_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

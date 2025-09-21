@@ -123,7 +123,7 @@ export default function RecruiterHighlightsPage() {
                 content={highlights.map((h, i) => `${i + 1}. ${h}`).join('\n\n')}
                 title="Recruiter Highlights"
                 metadata={{
-                  generatedAt: status.lastGenerated,
+                  generatedAt: new Date(status.lastGenerated || Date.now()),
                   settings: useAppDataStore.getState().settings,
                 }}
                 showWordCount={false}

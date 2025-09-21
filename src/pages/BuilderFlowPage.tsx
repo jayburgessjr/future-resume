@@ -298,7 +298,11 @@ export default function BuilderFlowPage() {
       </div>
 
       {/* Settings */}
-      <ReviewBar settings={settings} />
+      <ReviewBar settings={{
+        mode: settings.mode || 'professional',
+        voice: settings.voice || 'confident', 
+        format: settings.format || 'markdown'
+      }} />
 
       {/* Main */}
       <main className="container mx-auto px-4 py-8">

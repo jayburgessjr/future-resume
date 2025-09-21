@@ -14,8 +14,8 @@ interface AuthStore {
   setAuth: (user: User | null, session: Session | null) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  signIn: (email: string, password: string) => Promise<AuthTokenResponsePassword>;
-  signUp: (email: string, password: string, redirectUrl?: string) => Promise<AuthResponse>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signUp: (email: string, password: string, redirectUrl?: string) => Promise<any>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }

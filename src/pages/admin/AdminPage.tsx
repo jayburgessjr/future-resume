@@ -270,11 +270,17 @@ export const AdminPage = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ChartCard
                   title="New Users (30 days)"
-                  data={analytics?.series.new_users_by_day || []}
+                  data={(analytics?.series?.new_users_by_day || []).map((item: any) => ({
+                    day: item.day ? new Date(item.day).toLocaleDateString() : '',
+                    count: item.count || 0,
+                  })).filter((item: any) => item.day && item.count !== undefined)}
                 />
                 <ChartCard
                   title="Toolkits Created (30 days)"
-                  data={analytics?.series.toolkits_by_day || []}
+                  data={(analytics?.series?.toolkits_by_day || []).map((item: any) => ({
+                    day: item.day ? new Date(item.day).toLocaleDateString() : '',
+                    count: item.count || 0,
+                  })).filter((item: any) => item.day && item.count !== undefined)}
                 />
               </div>
             </Section>

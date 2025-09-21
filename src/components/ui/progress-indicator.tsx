@@ -91,12 +91,9 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                     <h4 className="text-sm font-medium text-foreground truncate">
                       {phase.title}
                     </h4>
-                    <Badge 
-                      size="sm" 
-                      className={`text-xs ${getStatusColor(phase.status)}`}
-                    >
-                      {phase.status === 'active' ? 'processing' : phase.status}
-                    </Badge>
+                     <Badge className={`text-xs ${getStatusColor(phase.status)}`}>
+                       {phase.status === 'active' ? 'processing' : phase.status}
+                     </Badge>
                   </div>
                   
                   <p className="text-sm text-muted-foreground mt-1">

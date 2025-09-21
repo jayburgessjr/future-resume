@@ -143,10 +143,10 @@ describe('Export Utilities', () => {
           value: '',
           style: {} as CSSStyleDeclaration,
           select: vi.fn(),
-        } as HTMLTextAreaElement);
+        } as unknown as HTMLTextAreaElement);
 
-        const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
-        const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+        const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
+        const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as any);
         const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue(null);
         const errorSpy = vi.spyOn(logger, 'error').mockImplementation(() => {});
 
@@ -176,10 +176,10 @@ describe('Export Utilities', () => {
         download: '',
         style: { display: '' } as CSSStyleDeclaration,
         click: vi.fn(),
-      } as HTMLAnchorElement);
+      } as unknown as HTMLAnchorElement);
 
-      const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => {});
-      const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => {});
+      const appendChild = vi.spyOn(document.body, 'appendChild').mockImplementation(() => null as any);
+      const removeChild = vi.spyOn(document.body, 'removeChild').mockImplementation(() => null as any);
 
       downloadFile('content', 'test.txt', 'text/plain');
 

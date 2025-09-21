@@ -297,7 +297,7 @@ export default function InterviewToolkitPage() {
                 ].join('\n')}
                 title="Interview Toolkit"
                 metadata={{
-                  generatedAt: status.lastGenerated,
+                  generatedAt: new Date(status.lastGenerated || Date.now()),
                   settings,
                 }}
                 showWordCount={false}

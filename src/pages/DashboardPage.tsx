@@ -424,8 +424,6 @@ const DashboardPage = () => {
                     resumeText: (masterResume ?? '').toString(),
                     jobText:
                       selectedJD?.description ??
-                      selectedJD?.jobDescription ??
-                      selectedJD?.text ??
                       '',
                     companySignal:
                       selectedJD?.company_signal ??

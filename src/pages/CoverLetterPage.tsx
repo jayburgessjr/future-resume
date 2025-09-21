@@ -132,7 +132,7 @@ export default function CoverLetterPage() {
                 content={coverLetter}
                 title="Cover Letter"
                 metadata={{
-                  generatedAt: status.lastGenerated,
+                  generatedAt: new Date(status.lastGenerated || Date.now()),
                   settings,
                   wordCount
                 }}

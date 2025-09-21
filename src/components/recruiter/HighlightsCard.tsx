@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { Copy, Download, RefreshCw, CheckCircle, FileText } from 'lucide-react';
 
@@ -139,29 +138,20 @@ export function HighlightsCard({ highlights, isGenerating, onRefresh, currentSet
         {/* Highlights Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           {highlights.map((highlight, index) => (
-            <TooltipProvider key={index}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="group p-4 bg-muted/30 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-help">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <CheckCircle className="w-4 h-4 text-accent" />
-                      </div>
-                      <p className="text-sm leading-relaxed text-foreground">
-                        {truncateText(highlight)}
-                      </p>
-                    </div>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent 
-                  side="bottom" 
-                  className="max-w-xs p-3 text-sm"
-                  align="start"
-                >
-                  {highlight}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div 
+              key={index}
+              className="group p-4 bg-muted/30 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-help"
+              title={highlight}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <CheckCircle className="w-4 h-4 text-accent" />
+                </div>
+                <p className="text-sm leading-relaxed text-foreground">
+                  {truncateText(highlight)}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
 

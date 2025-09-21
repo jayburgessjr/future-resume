@@ -21,7 +21,7 @@ export function useAuth() {
           logger.error('Session check failed:', error);
           if (mounted) {
             setAuth(null, null);
-            setError('Authentication service unavailable. Please try again.');
+            setLoading(false);
           }
           return;
         }
@@ -34,10 +34,6 @@ export function useAuth() {
         logger.error('Auth initialization failed:', error);
         if (mounted) {
           setAuth(null, null);
-          setError('Failed to initialize authentication. Please refresh the page.');
-        }
-      } finally {
-        if (mounted) {
           setLoading(false);
         }
       }

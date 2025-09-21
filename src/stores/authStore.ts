@@ -33,7 +33,12 @@ export const useAuthStore = create<AuthStore>()(
 
         // Check subscription status when user is authenticated
         if (user && session) {
-          await useSubscriptionStore.getState().checkSubscription();
+          try {
+            await useSubscriptionStore.getState().checkSubscription();
+          } catch (error) {
+            logger.error('Subscription check failed:', error);
+            // Don't fail auth if subscription check fails
+          }
         }
       },
 

@@ -25,11 +25,11 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       user: null,
       session: null,
-      loading: true,
+      loading: false,
       error: null,
 
       setAuth: async (user, session) => {
-        set({ user, session, loading: false, error: null });
+        set({ user, session, error: null });
 
         // Check subscription status when user is authenticated
         if (user && session) {

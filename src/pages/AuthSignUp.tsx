@@ -8,7 +8,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { nextAfterSignUp } from "@/lib/flowRouter";
 import { ArrowLeft, Mail, Lock, AlertCircle, User, CheckCircle } from "lucide-react";
 
 const AuthSignUp = () => {
@@ -24,7 +23,7 @@ const AuthSignUp = () => {
   // Redirect if already signed in
   useEffect(() => {
     if (user) {
-      navigate(nextAfterSignUp());
+      navigate('/dashboard');
     }
   }, [user, navigate]);
 
@@ -41,7 +40,7 @@ const AuthSignUp = () => {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/pricing`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       const { error } = await signUp(email, password, redirectUrl);
       
       if (error) {
@@ -57,11 +56,11 @@ const AuthSignUp = () => {
 
       toast({
         title: "Account created!",
-        description: "Please check your email for a confirmation link.",
+        description: "You've been signed up successfully.",
       });
 
-      // After successful signup, redirect to pricing
-      navigate(nextAfterSignUp());
+      // Direct redirect to dashboard
+      navigate('/dashboard');
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
     } finally {

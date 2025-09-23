@@ -11,7 +11,6 @@ export function useAuth() {
 
     const initializeAuth = async () => {
       try {
-        setLoading(true);
         setError(null);
 
         // Get current session
@@ -21,7 +20,6 @@ export function useAuth() {
           logger.error('Session check failed:', error);
           if (mounted) {
             setAuth(null, null);
-            setLoading(false);
           }
           return;
         }
@@ -34,7 +32,6 @@ export function useAuth() {
         logger.error('Auth initialization failed:', error);
         if (mounted) {
           setAuth(null, null);
-          setLoading(false);
         }
       }
     };

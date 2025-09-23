@@ -7,8 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { nextAfterSignIn, returnTo } from "@/lib/flowRouter";
-import { supabase } from "@/integrations/supabase/client";
+import { returnTo } from "@/lib/flowRouter";
 import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
 
 const AuthSignIn = () => {
@@ -24,7 +23,7 @@ const AuthSignIn = () => {
   // Redirect if already signed in
   useEffect(() => {
     if (user) {
-      const destination = nextAfterSignIn({ returnTo: returnTo.get() });
+      const destination = returnTo.get() || '/dashboard';
       returnTo.clear();
       navigate(destination);
     }
@@ -49,19 +48,8 @@ const AuthSignIn = () => {
         return;
       }
 
-      // Get user profile to determine redirect
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('plan, onboarding_status')
-        .eq('user_id', user?.id)
-        .single();
-
-      const destination = nextAfterSignIn({ 
-        returnTo: returnTo.get(),
-        hasPlan: !!profile?.plan,
-        onboardingStatus: profile?.onboarding_status 
-      });
-      
+      // Direct redirect to dashboard
+      const destination = returnTo.get() || '/dashboard';
       returnTo.clear();
       
       toast({

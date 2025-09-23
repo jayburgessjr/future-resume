@@ -55,10 +55,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
 
-  // Show loading state while checking auth
-  if (loading) {
-    return <AuthLoadingSkeleton />;
-  }
+  // Skip loading state - redirect immediately if not authenticated
 
   // Redirect to sign-in if not authenticated
   if (!user) {

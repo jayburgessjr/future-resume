@@ -237,7 +237,7 @@ export const ErrorRecovery: React.FC<ErrorRecoveryProps> = ({
           </details>
         )}
 
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <details className="text-xs bg-muted p-2 rounded">
             <summary className="cursor-pointer font-medium mb-1">
               Debug Info

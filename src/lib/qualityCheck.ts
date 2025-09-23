@@ -161,7 +161,7 @@ function generateRationale(score: number, factors: GreatnessCheckResult["factors
  * Log quality assessment results for development
  */
 export function logQualityAssessment(result: GreatnessCheckResult, context: string): void {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.group(`🎯 Resume Quality Assessment - ${context}`);
     console.log(`Overall Score: ${(result.score * 100).toFixed(1)}%`);
     console.log(`Rationale: ${result.rationale}`);

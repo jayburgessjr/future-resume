@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { usePersistenceStore } from "@/stores/persistenceStore";
 import ModernLandingPage from "./pages/ModernLandingPage";
@@ -78,12 +79,14 @@ const App = () => (
         enableSystem
         disableTransitionOnChange
       >
-        <Toaster />
-        <BrowserRouter>
-          <AuthErrorBoundary>
-            <AuthenticatedApp />
-          </AuthErrorBoundary>
-        </BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <AuthErrorBoundary>
+              <AuthenticatedApp />
+            </AuthErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </ErrorBoundary>
